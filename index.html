@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>FURRY_NEXUS :: TERMINAL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: none;
+        }
+
+        body {
+            background: #000;
+            color: #c0c0c0;
+            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+            font-size: 13px;
+            line-height: 1.15;
+            height: 100vh;
+            overflow: hidden;
+            cursor: text;
+        }
+
+        /* CRT Scanlines */
+        .crt::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 255, 0, 0.02) 50%
+            );
+            background-size: 100% 3px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        /* Main Terminal Container */
+        #terminal-window {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 1px solid #333;
+            background: #0a0a0a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 24px;
+            background: #002200;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            user-select: none;
+        }
+
+        .title-text {
+            flex: 1;
+            color: #00ff00;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 1px;
+        }
+
+        .win-btn {
+            width: 18px;
+            height: 16px;
+            background: #333;
+            color: #ccc;
+            border: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .win-btn:hover {
+            background: #444;
+        }
+
+        .close-btn:hover {
+            background: #c00;
+            color: white;
+        }
+
+        /* Terminal Content */
+        #terminal-content {
+            flex: 1;
+            padding: 8px 10px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Path Header */
+        .path-header {
+            color: #00ff00;
+            margin-bottom: 2px;
+            height: 16px;
+            line-height: 16px;
+            white-space: pre;
+        }
+
+        /* Terminal Lines */
+        .line {
+            height: 16px;
+            line-height: 16px;
+            margin: 0;
+            padding: 0;
+            white-space: pre;
+            opacity: 0;
+        }
+
+        .prompt {
+            color: #8a2be2;
+        }
+
+        .command {
+            color: #fff;
+        }
+
+        .output {
+            color: #c0c0c0;
+            padding-left: 2px;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .error {
+            color: #ff3333;
+        }
+
+        .dim {
+            color: #666;
+        }
+
+        .cyan {
+            color: #00ffff;
+        }
+
+        .yellow {
+            color: #ffff00;
+        }
+
+        .purple {
+            color: #8a2be2;
+        }
+
+        /* Cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #00ff00;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+            margin-left: 1px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: inline-block;
+            width: 150px;
+            height: 1px;
+            background: #003300;
+            margin-left: 10px;
+            vertical-align: middle;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
+        }
+
+        /* Matrix Background */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: -1;
+        }
+
+        /* Menu Styles */
+        .menu-container {
+            margin: 10px 0;
+            border-left: 1px solid #333;
+            padding-left: 10px;
+        }
+
+        .menu-title {
+            color: #00ffff;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .menu-item {
+            margin: 8px 0;
+            padding-left: 10px;
+        }
+
+        .menu-item a {
+            color: #c0c0c0;
+            text-decoration: none;
+            display: block;
+            padding: 2px 5px;
+            border: 1px solid transparent;
+        }
+
+        .menu-item a:hover {
+            background: #002200;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .menu-hint {
+            color: #666;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        /* Form Styles */
+        .form-line {
+            margin: 8px 0;
+        }
+
+        .form-label {
+            color: #00ffff;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .form-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #00ff00;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            width: 200px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .form-button {
+            background: #002200;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 3px 10px;
+            font-family: 'Consolas', monospace;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .form-button:hover {
+            background: #003300;
+        }
+
+        /* Info Box */
+        .info-box {
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            background: #001100;
+        }
+
+        /* Error Message */
+        .error-msg {
+            color: #ff3333;
+            border: 1px solid #ff3333;
+            padding: 10px;
+            margin: 10px 0;
+            background: #330000;
+        }
+
+        /* Animations */
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 0); }
+            40% { transform: translate(1px, 0); }
+            60% { transform: translate(-1px, 0); }
+            80% { transform: translate(1px, 0); }
+            100% { transform: translate(0); }
+        }
+
+        .glitch {
+            animation: glitch 0.3s linear;
+        }
+
+        /* Scrollbar */
+        #terminal-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #terminal-content::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        #terminal-content::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        #terminal-content::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="crt">
+    <canvas id="matrix-bg"></canvas>
+    
+    <div id="terminal-window">
+        <div class="title-bar">
+            <div class="title-text">FURRY_NEXUS</div>
+            <div class="window-controls">
+                <div class="win-btn" onclick="minimizeWindow()">_</div>
+                <div class="win-btn" onclick="maximizeWindow()">□</div>
+                <div class="win-btn close-btn" onclick="closeWindow()">×</div>
+            </div>
+        </div>
+        
+        <div id="terminal-content">
+            <!-- Content will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            
+            // ===== CONFIG =====
+            const config = {
+                typeSpeed: 40,
+                lineDelay: 300,
+                user: 'furry',
+                host: 'nexus',
+                maxWidth: 70
+            };
+            
+            // ===== STATE =====
+            let currentPath = '~';
+            let isTyping = false;
+            let lineIndex = 0;
+            let isRegistered = sessionStorage.getItem('furryNexusRegistered') === 'true';
+            let isLoggedIn = sessionStorage.getItem('furryNexusLoggedIn') === 'true';
+            let currentPage = 'boot';
+            
+            // ===== ELEMENTS =====
+            const content = document.getElementById('terminal-content');
+            const canvas = document.getElementById('matrix-bg');
+            const ctx = canvas.getContext('2d');
+            
+            // ===== SETUP CANVAS =====
+            function setupCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                const chars = "01";
+                const fontSize = 12;
+                const columns = Math.floor(canvas.width / fontSize);
+                const drops = new Array(columns).fill(1);
+                
+                function draw() {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = fontSize + 'px monospace';
+                    
+                    for (let i = 0; i < drops.length; i++) {
+                        const char = chars[Math.floor(Math.random() * chars.length)];
+                        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                        
+                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                }
+                
+                setInterval(draw, 50);
+            }
+            
+            // ===== PATH MANAGEMENT =====
+            function updatePathHeader() {
+                const pathDisplay = currentPath === '~' ? '~' : currentPath;
+                return `┌─[${config.user}@${config.host}]─[${pathDisplay}]`;
+            }
+            
+            function changePath(newPath) {
+                currentPath = newPath;
+            }
+            
+            // ===== TERMINAL LINES =====
+            function createLine(type, content = '', cls = '') {
+                const line = document.createElement('div');
+                line.className = `line ${type} ${cls}`;
+                line.id = `line-${lineIndex++}`;
+                
+                switch(type) {
+                    case 'path':
+                        line.innerHTML = `<span class="path-header">${content}</span>`;
+                        break;
+                    case 'command':
+                        line.innerHTML = `<span class="prompt">$</span> <span class="command">${content}</span>`;
+                        break;
+                    case 'output':
+                        line.innerHTML = `<span class="output">${content}</span>`;
+                        break;
+                    case 'system':
+                        line.innerHTML = `<span class="dim">${content}</span>`;
+                        break;
+                    case 'menu':
+                        line.innerHTML = content;
+                        break;
+                }
+                
+                return line;
+            }
+            
+            // ===== TYPEWRITER EFFECT =====
+            async function typeLine(line, text, speed = config.typeSpeed) {
+                return new Promise(resolve => {
+                    let i = 0;
+                    const textEl = line.querySelector('.command, .output, .dim, .path-header');
+                    
+                    function typeChar() {
+                        if (i < text.length) {
+                            textEl.textContent += text.charAt(i);
+                            i++;
+                            setTimeout(typeChar, speed);
+                        } else {
+                            resolve();
+                        }
+                    }
+                    
+                    line.style.opacity = '1';
+                    if (textEl) {
+                        textEl.textContent = '';
+                        typeChar();
+                    }
+                });
+            }
+            
+            // ===== BOOT SEQUENCE =====
+            async function bootSequence() {
+                isTyping = true;
+                currentPage = 'boot';
+                
+                // Clear terminal
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                // Initial path
+                const pathLine = createLine('path', updatePathHeader());
+                content.appendChild(pathLine);
+                await typeLine(pathLine, updatePathHeader());
+                await wait(500);
+                
+                // System boot
+                await showLine('command', 'system_check --all');
+                await wait(300);
+                await showLine('output', '[✓] CPU: Furry_Processor @ 2.4GHz', 'success');
+                await wait(150);
+                await showLine('output', '[✓] RAM: 65536K OK', 'success');
+                await wait(150);
+                await showLine('output', '[✓] Storage: Furry_HDD 80.0GB', 'success');
+                await wait(300);
+                
+                // Kernel load
+                await showLine('command', 'load_kernel --encrypted');
+                await showProgress(1200);
+                await showLine('output', 'Kernel loaded: furry_kernel.sys', 'success');
+                await wait(400);
+                
+                // Services
+                await showLine('command', 'start_services --all');
+                await wait(200);
+                await showLine('output', 'fursona.service     [RUNNING]', 'success');
+                await wait(100);
+                await showLine('output', 'pawprint_drv       [LOADED]', 'success');
+                await wait(100);
+                await showLine('output', 'nexus_net          [ACTIVE]', 'success');
+                await wait(400);
+                
+                // Network
+                await showLine('command', 'network_init --secure');
+                await wait(300);
+                await showLine('output', 'IP: 192.168.1.133', 'dim');
+                await wait(100);
+                await showLine('output', 'Gateway: 192.168.1.1', 'dim');
+                await wait(100);
+                await showLine('output', 'DNS: 8.8.8.8', 'dim');
+                await wait(300);
+                await showLine('output', 'Connecting to Nexus...', 'dim');
+                await showProgress(800);
+                await showLine('output', 'Connection established [ENCRYPTED]', 'success');
+                await wait(500);
+                
+                // Authentication check
+                await showLine('command', 'authenticate --user guest');
+                await wait(400);
+                await showLine('output', 'Verifying credentials...', 'dim');
+                await showProgress(600);
+                
+                // Check if user is registered
+                if (!isRegistered) {
+                    await showLine('output', 'User not found in database', 'error');
+                    await wait(400);
+                    await showLine('output', 'Redirecting to registration...', 'dim');
+                    await wait(800);
+                    showRegistrationForm();
+                } else if (!isLoggedIn) {
+                    await showLine('output', 'Session expired. Please login.', 'error');
+                    await wait(400);
+                    showLoginForm();
+                } else {
+                    await showLine('output', 'Welcome back, USER_1337', 'success');
+                    await wait(400);
+                    showMainMenu();
+                }
+                
+                isTyping = false;
+            }
+            
+            // ===== REGISTRATION FORM =====
+            function showRegistrationForm() {
+                currentPage = 'register';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[furry@nexus]─[/registration]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'FURRY NEXUS REGISTRATION', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                const info = createLine('output', 'Please provide your details to join the Furry Nexus community:', 'dim');
+                content.appendChild(info);
+                info.style.opacity = '1';
+                
+                // Create form container
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="form-line">
+                        <span class="form-label">Furry Name:</span>
+                        <input type="text" id="furryName" class="form-input" maxlength="20">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Fursona Type:</span>
+                        <input type="text" id="fursonaType" class="form-input" maxlength="20">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Favorite Color:</span>
+                        <input type="text" id="favColor" class="form-input" maxlength="15">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Access Code:</span>
+                        <input type="password" id="accessCode" class="form-input" maxlength="15">
+                    </div>
+                    <div class="form-line">
+                        <button class="form-button" onclick="processRegistration()">Submit Registration</button>
+                        <button class="form-button" onclick="bootSequence()" style="margin-left: 10px;">Cancel</button>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+                
+                // Add cursor to first input
+                setTimeout(() => {
+                    document.getElementById('furryName').focus();
+                }, 100);
+            }
+            
+            // ===== LOGIN FORM =====
+            function showLoginForm() {
+                currentPage = 'login';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[furry@nexus]─[/login]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'FURRY NEXUS LOGIN', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                // Create form container
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="form-line">
+                        <span class="form-label">Furry Name:</span>
+                        <input type="text" id="loginName" class="form-input" maxlength="20">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Access Code:</span>
+                        <input type="password" id="loginCode" class="form-input" maxlength="15">
+                    </div>
+                    <div class="form-line">
+                        <button class="form-button" onclick="processLogin()">Login</button>
+                        <button class="form-button" onclick="bootSequence()" style="margin-left: 10px;">Cancel</button>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+                
+                // Add cursor to first input
+                setTimeout(() => {
+                    document.getElementById('loginName').focus();
+                }, 100);
+            }
+            
+            // ===== MAIN MENU =====
+            function showMainMenu() {
+                currentPage = 'main';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[furry@nexus]─[/main]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const welcome = createLine('output', 'Welcome to FURRY NEXUS - Dark Web Community Terminal', 'success');
+                content.appendChild(welcome);
+                welcome.style.opacity = '1';
+                
+                const info = createLine('output', 'Secure connection established. All communications encrypted.', 'dim');
+                content.appendChild(info);
+                info.style.opacity = '1';
+                
+                // Create menu container
+                const menuContainer = document.createElement('div');
+                menuContainer.className = 'menu-container';
+                menuContainer.innerHTML = `
+                    <div class="menu-title">MAIN MENU</div>
+                    <div class="menu-item">
+                        <a href="member.html" onclick="return handleLinkClick(this)">[1] Nama Anggota</a>
+                        <span class="menu-hint">- View all community members</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="founders.html" onclick="return handleLinkClick(this)">[2] Pendiri Komunitas</a>
+                        <span class="menu-hint">- Community founders information</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="wishlist.html" onclick="return handleLinkClick(this)">[3] Wishlist Anggota</a>
+                        <span class="menu-hint">- Member wishlists and desires</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="tracking.html" onclick="return handleLinkClick(this)">[4] Tracking Anggota</a>
+                        <span class="menu-hint">- Member activity tracking</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="info.html" onclick="return handleLinkClick(this)">[5] Informasi Anggota</a>
+                        <span class="menu-hint">- Detailed member information</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="events.html" onclick="return handleLinkClick(this)">[6] Event Komunitas</a>
+                        <span class="menu-hint">- Upcoming furry events</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="logout()">[7] Logout</a>
+                        <span class="menu-hint">- Exit system</span>
+                    </div>
+                `;
+                content.appendChild(menuContainer);
+                
+                const commandLine = createLine('command', '');
+                content.appendChild(commandLine);
+                commandLine.style.opacity = '1';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                commandLine.querySelector('.command').appendChild(cursor);
+            }
+            
+            // ===== LINK HANDLER =====
+            function handleLinkClick(linkElement) {
+                const href = linkElement.getAttribute('href');
+                
+                // Jika href kosong atau hanya '#', jangan lakukan apa-apa
+                if (!href || href === '#') {
+                    return false;
+                }
+                
+                // Jika href adalah file HTML yang ada di server
+                if (href.endsWith('.html')) {
+                    // Coba untuk fetch file HTML
+                    fetch(href)
+                        .then(response => {
+                            if (response.ok) {
+                                // File ada, buka seperti biasa
+                                return true;
+                            } else {
+                                // File tidak ada, tampilkan error di terminal
+                                showFileNotFoundError(href);
+                                return false;
+                            }
+                        })
+                        .catch(error => {
+                            // Error dalam fetch, tampilkan error di terminal
+                            showFileNotFoundError(href);
+                            return false;
+                        });
+                    
+                    // Return false untuk mencegah default behavior
+                    return false;
+                }
+                
+                // Untuk link internal dengan onclick handler, biarkan onclick yang menangani
+                return true;
+            }
+            
+            // ===== SHOW FILE NOT FOUND ERROR =====
+            function showFileNotFoundError(filename) {
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', `┌─[furry@nexus]─[/error]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const errorLine = createLine('output', `ERROR: File not found`, 'error');
+                content.appendChild(errorLine);
+                errorLine.style.opacity = '1';
+                
+                const detailLine = createLine('output', `File '${filename}' tidak ditemukan di server.`, 'dim');
+                content.appendChild(detailLine);
+                detailLine.style.opacity = '1';
+                
+                const messageLine = createLine('output', `No have package here. File tidak tersedia.`, 'error');
+                content.appendChild(messageLine);
+                messageLine.style.opacity = '1';
+                
+                // Tampilkan menu kembali
+                const menuContainer = document.createElement('div');
+                menuContainer.className = 'menu-container';
+                menuContainer.innerHTML = `
+                    <div class="error-msg">
+                        <strong>FILE ACCESS ERROR</strong><br>
+                        File yang diminta tidak tersedia di sistem.<br>
+                        Hubungi administrator untuk membuat file: ${filename}
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="kosong" onclick="return handleLinkClick(this)">[TEST] Link ke file kosong</a>
+                        <span class="menu-hint">- Coba klik link ini</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="test.html" onclick="return handleLinkClick(this)">[TEST] Link ke test.html</a>
+                        <span class="menu-hint">- File ini mungkin tidak ada</span>
+                    </div>
+                `;
+                content.appendChild(menuContainer);
+                
+                const commandLine = createLine('command', '');
+                content.appendChild(commandLine);
+                commandLine.style.opacity = '1';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                commandLine.querySelector('.command').appendChild(cursor);
+            }
+            
+            // ===== PAGE DISPLAY FUNCTIONS =====
+            function showPage(page) {
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                let title = '';
+                let contentHTML = '';
+                
+                switch(page) {
+                    case 'members':
+                        title = 'NAMA ANGGOTA KOMUNITAS';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">ACTIVE MEMBERS (23)</div>
+                                <div class="menu-item">• SilverFox - Urban Fox</div>
+                                <div class="menu-item">• MidnightPaw - Black Wolf</div>
+                                <div class="menu-item">• AuroraBorealis - Arctic Wolf</div>
+                                <div class="menu-item">• CrimsonScales - Dragon</div>
+                                <div class="menu-item">• PixelPaws - Protogen</div>
+                                <div class="menu-item">• ShadowWhisker - Panther</div>
+                                <div class="menu-item">• EmberFang - Red Fox</div>
+                                <div class="menu-item">• FrostFluff - Husky</div>
+                                <div class="menu-item">• SolarFlare - Lion</div>
+                                <div class="menu-item">• MysticHowl - Wolf</div>
+                                <div class="menu-item">• NeonTail - Neon Fox</div>
+                                <div class="menu-item">• RustyClaw - Bear</div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="export_members.html" onclick="return handleLinkClick(this)">[LINK] Export Data Members</a>
+                                <span class="menu-hint">- File HTML ini mungkin tidak ada</span>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'founders':
+                        title = 'PENDIRI KOMUNITAS';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">FOUNDERS (3)</div>
+                                <div class="menu-item">
+                                    <div><strong>AlphaHowl</strong> - Direktur Utama</div>
+                                    <div class="dim">Species: Arctic Wolf | Joined: 2015</div>
+                                    <div class="dim">Contact: alpha@furrynexus.dark</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>CyberPaws</strong> - Kepala Teknologi</div>
+                                    <div class="dim">Species: Protogen | Joined: 2016</div>
+                                    <div class="dim">Contact: cyber@furrynexus.dark</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>ShadowWhisker</strong> - Kepala Keamanan</div>
+                                    <div class="dim">Species: Panther | Joined: 2015</div>
+                                    <div class="dim">Contact: shadow@furrynexus.dark</div>
+                                </div>
+                            </div>
+                            <div class="info-box">
+                                <div class="menu-title">SEJARAH KOMUNITAS</div>
+                                <div class="dim">Furry Nexus didirikan pada 2015 sebagai komunitas eksklusif bagi para furry yang menginginkan privasi dan keamanan dalam berekspresi. Komunitas ini beroperasi di jaringan terenkripsi untuk melindungi identitas anggota.</div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="founders_details.html" onclick="return handleLinkClick(this)">[LINK] Detail Pendiri (File tidak ada)</a>
+                                <span class="menu-hint">- Coba klik link ini</span>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'wishlist':
+                        title = 'WISHLIST ANGGOTA';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">WISHLIST ITEMS</div>
+                                <div class="menu-item">
+                                    <div><strong>SilverFox</strong> - Wishlist:</div>
+                                    <div class="dim">• Fursuit baru - $2,500</div>
+                                    <div class="dim">• Art commission - $200</div>
+                                    <div class="dim">• Convention ticket - $150</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>PixelPaws</strong> - Wishlist:</div>
+                                    <div class="dim">• LED panels for suit - $800</div>
+                                    <div class="dim">• 3D printer filament - $100</div>
+                                    <div class="dim">• Raspberry Pi 5 - $80</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>CrimsonScales</strong> - Wishlist:</div>
+                                    <div class="dim">• Dragon wings prop - $1,200</div>
+                                    <div class="dim">• Scale material - $300</div>
+                                    <div class="dim">• Fire breath effect kit - $450</div>
+                                </div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'tracking':
+                        title = 'TRACKING ANGGOTA';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">AKTIVITAS TERKINI</div>
+                                <div class="menu-item">
+                                    <div><strong>SilverFox</strong></div>
+                                    <div class="dim">Status: Online | Last active: Now</div>
+                                    <div class="dim">Location: Art channel | Activity: Drawing</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>MidnightPaw</strong></div>
+                                    <div class="dim">Status: Online | Last active: 5 min ago</div>
+                                    <div class="dim">Location: General chat | Activity: Chatting</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>AuroraBorealis</strong></div>
+                                    <div class="dim">Status: Away | Last active: 2 hours ago</div>
+                                    <div class="dim">Location: Offline | Activity: Sleeping</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>PixelPaws</strong></div>
+                                    <div class="dim">Status: Online | Last active: Now</div>
+                                    <div class="dim">Location: Tech lab | Activity: Coding</div>
+                                </div>
+                            </div>
+                            <div class="info-box">
+                                <div class="menu-title">STATISTIK KOMUNITAS</div>
+                                <div class="dim">• Total anggota aktif: 23</div>
+                                <div class="dim">• Online sekarang: 12</div>
+                                <div class="dim">• Pesan hari ini: 347</div>
+                                <div class="dim">• Event aktif: 3</div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'info':
+                        title = 'INFORMASI ANGGOTA';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">DETAIL ANGGOTA CONTOH</div>
+                                <div class="menu-item">
+                                    <div><strong>Nama: SilverFox</strong></div>
+                                    <div class="dim">Species: Urban Fox</div>
+                                    <div class="dim">Gender: Male</div>
+                                    <div class="dim">Age: 28</div>
+                                    <div class="dim">Join Date: 15/03/2018</div>
+                                    <div class="dim">Role: Artist & Moderator</div>
+                                    <div class="dim">Specialty: Digital Art, Fursuit Design</div>
+                                    <div class="dim">Contact: silver@furrynexus.dark</div>
+                                </div>
+                            </div>
+                            <div class="info-box">
+                                <div class="menu-title">SYSTEM COMMANDS</div>
+                                <div class="dim">Untuk informasi anggota spesifik, gunakan perintah:</div>
+                                <div class="menu-item">• view_member --name [nama]</div>
+                                <div class="menu-item">• search_member --species [species]</div>
+                                <div class="menu-item">• list_members --role [role]</div>
+                                <div class="menu-item">• export_data --format csv</div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'events':
+                        title = 'EVENT KOMUNITAS';
+                        contentHTML = `
+                            <div class="info-box">
+                                <div class="menu-title">UPCOMING EVENTS</div>
+                                <div class="menu-item">
+                                    <div><strong>Art Stream Collab</strong></div>
+                                    <div class="dim">Date: 15 Nov 2023 | Time: 20:00 UTC</div>
+                                    <div class="dim">Host: SilverFox & PixelPaws</div>
+                                    <div class="dim">Participants: 8 confirmed</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>Fursuit Friday</strong></div>
+                                    <div class="dim">Date: Every Friday | Time: 22:00 UTC</div>
+                                    <div class="dim">Host: Community</div>
+                                    <div class="dim">Activity: Fursuit showcase and chat</div>
+                                </div>
+                                <div class="menu-item">
+                                    <div><strong>Tech Workshop: LED Basics</strong></div>
+                                    <div class="dim">Date: 22 Nov 2023 | Time: 18:00 UTC</div>
+                                    <div class="dim">Host: PixelPaws</div>
+                                    <div class="dim">Topic: LED programming for fursuits</div>
+                                </div>
+                            </div>
+                            <div class="menu-item">
+                                <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                            </div>
+                        `;
+                        break;
+                }
+                
+                const pathLine = createLine('path', `┌─[furry@nexus]─[/${page}]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const titleLine = createLine('output', title, 'cyan');
+                content.appendChild(titleLine);
+                titleLine.style.opacity = '1';
+                
+                const menuContainer = document.createElement('div');
+                menuContainer.className = 'menu-container';
+                menuContainer.innerHTML = contentHTML;
+                content.appendChild(menuContainer);
+                
+                const commandLine = createLine('command', '');
+                content.appendChild(commandLine);
+                commandLine.style.opacity = '1';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                commandLine.querySelector('.command').appendChild(cursor);
+            }
+            
+            // ===== PROCESS FUNCTIONS =====
+            function processRegistration() {
+                const furryName = document.getElementById('furryName').value;
+                const fursonaType = document.getElementById('fursonaType').value;
+                const favColor = document.getElementById('favColor').value;
+                const accessCode = document.getElementById('accessCode').value;
+                
+                if (!furryName || !fursonaType || !favColor || !accessCode) {
+                    alert('Please fill all fields!');
+                    return;
+                }
+                
+                // Save registration
+                sessionStorage.setItem('furryNexusRegistered', 'true');
+                sessionStorage.setItem('furryNexusLoggedIn', 'true');
+                sessionStorage.setItem('furryName', furryName);
+                sessionStorage.setItem('fursonaType', fursonaType);
+                
+                isRegistered = true;
+                isLoggedIn = true;
+                
+                // Show success and go to main menu
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[furry@nexus]─[/registration]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const successLine = createLine('output', 'Registration successful! Welcome to Furry Nexus!', 'success');
+                content.appendChild(successLine);
+                successLine.style.opacity = '1';
+                
+                setTimeout(() => {
+                    showMainMenu();
+                }, 1500);
+            }
+            
+            function processLogin() {
+                const loginName = document.getElementById('loginName').value;
+                const loginCode = document.getElementById('loginCode').value;
+                
+                // Simple validation
+                if (loginName && loginCode) {
+                    sessionStorage.setItem('furryNexusLoggedIn', 'true');
+                    isLoggedIn = true;
+                    
+                    // Show success and go to main menu
+                    content.innerHTML = '';
+                    lineIndex = 0;
+                    
+                    const pathLine = createLine('path', '┌─[furry@nexus]─[/login]');
+                    content.appendChild(pathLine);
+                    pathLine.style.opacity = '1';
+                    
+                    const successLine = createLine('output', 'Login successful! Welcome back!', 'success');
+                    content.appendChild(successLine);
+                    successLine.style.opacity = '1';
+                    
+                    setTimeout(() => {
+                        showMainMenu();
+                    }, 1500);
+                } else {
+                    alert('Please enter both fields!');
+                }
+            }
+            
+            function logout() {
+                sessionStorage.setItem('furryNexusLoggedIn', 'false');
+                isLoggedIn = false;
+                bootSequence();
+            }
+            
+            // ===== WINDOW CONTROLS =====
+            function minimizeWindow() {
+                document.querySelector('.win-btn').classList.add('glitch');
+                setTimeout(() => document.querySelector('.win-btn').classList.remove('glitch'), 300);
+                // In a real app, this would minimize the window
+                alert('Minimize function - in a real app this would minimize the window');
+            }
+            
+            function maximizeWindow() {
+                document.querySelectorAll('.win-btn')[1].classList.add('glitch');
+                setTimeout(() => document.querySelectorAll('.win-btn')[1].classList.remove('glitch'), 300);
+                
+                const terminalWindow = document.getElementById('terminal-window');
+                if (terminalWindow.style.top === '0px') {
+                    terminalWindow.style.top = '20px';
+                    terminalWindow.style.left = '20px';
+                    terminalWindow.style.right = '20px';
+                    terminalWindow.style.bottom = '20px';
+                } else {
+                    terminalWindow.style.top = '0px';
+                    terminalWindow.style.left = '0px';
+                    terminalWindow.style.right = '0px';
+                    terminalWindow.style.bottom = '0px';
+                }
+            }
+            
+            function closeWindow() {
+                document.querySelector('.close-btn').classList.add('glitch');
+                setTimeout(() => document.querySelector('.close-btn').classList.remove('glitch'), 300);
+                
+                if (confirm('Close Furry Nexus Terminal?')) {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        document.body.innerHTML = '<div style="padding: 20px; color: #8a2be2; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">TERMINAL CLOSED<br><br>Connection terminated.<br>All data secured.</div>';
+                    }, 500);
+                }
+            }
+            
+            // ===== HELPER FUNCTIONS =====
+            async function showLine(type, text, cls = '') {
+                const line = createLine(type, text, cls);
+                content.appendChild(line);
+                
+                // Scroll to bottom
+                content.scrollTop = content.scrollHeight;
+                
+                if (type === 'command' || type === 'output' || type === 'system') {
+                    await typeLine(line, text);
+                } else if (type === 'path') {
+                    await wait(config.lineDelay);
+                    line.style.opacity = '1';
+                }
+                
+                return line;
+            }
+            
+            async function showProgress(duration) {
+                const line = createLine('output', '');
+                line.innerHTML = '<span class="output"><span class="progress-container"><span class="progress-bar"></span></span></span>';
+                content.appendChild(line);
+                
+                await wait(10);
+                
+                const bar = line.querySelector('.progress-bar');
+                bar.style.transition = `width ${duration}ms linear`;
+                bar.style.width = '100%';
+                
+                await wait(duration);
+                line.style.opacity = '1';
+            }
+            
+            function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            // ===== INITIALIZE =====
+            function init() {
+                setupCanvas();
+                
+                // Check if already registered and logged in
+                if (isRegistered && isLoggedIn) {
+                    // Skip boot sequence and go directly to main menu
+                    showMainMenu();
+                } else if (isRegistered && !isLoggedIn) {
+                    // Show login form
+                    setTimeout(() => {
+                        content.innerHTML = '';
+                        showLoginForm();
+                    }, 100);
+                } else {
+                    // Start boot sequence
+                    setTimeout(bootSequence, 800);
+                }
+                
+                // Handle resize
+                window.addEventListener('resize', () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                });
+            }
+            
+            // Expose functions to global scope
+            window.minimizeWindow = minimizeWindow;
+            window.maximizeWindow = maximizeWindow;
+            window.closeWindow = closeWindow;
+            window.processRegistration = processRegistration;
+            window.processLogin = processLogin;
+            window.showPage = showPage;
+            window.showMainMenu = showMainMenu;
+            window.logout = logout;
+            window.bootSequence = bootSequence;
+            window.handleLinkClick = handleLinkClick;
+            
+            // Start when ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+            
+        })();
+    </script>
+</body>
+</html>
