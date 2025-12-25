@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Founder And Web Developement</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== RESET & BASE STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+        
+        /* ===== MATRIX BACKGROUND EFFECT ===== */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* ===== LOADING SCREEN ===== */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1.5s ease;
+        }
+        
+        .terminal-header {
+            color: #00ff00;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .terminal-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            animation: glitch 3s infinite;
+        }
+        
+        .hacker-text {
+            height: 200px;
+            width: 90%;
+            max-width: 800px;
+            overflow-y: auto;
+            background-color: #001100;
+            border: 1px solid #003300;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .loading-container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        
+        .loading-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #001100;
+            border: 1px solid #003300;
+            padding: 2px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #00ff00;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .progress-blocks {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .block {
+            flex: 1;
+            height: 100%;
+            border-right: 1px solid #002200;
+            background-color: #001100;
+        }
+        
+        .block.filled {
+            background-color: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        
+        /* ===== BACK BUTTON ===== */
+        #back-button-container {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0;
+            transition: opacity 1s ease 0.5s;
+        }
+        
+        .back-button {
+            display: inline-block;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            padding: 12px 25px;
+            background-color: rgba(0, 20, 0, 0.7);
+            transition: all 0.3s;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .back-button:hover {
+            background-color: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px #00ff00;
+            transform: translateY(-2px);
+        }
+        
+        /* ===== MAIN CONTENT ===== */
+        #main-content {
+            display: none;
+            padding-top: 20px;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #00ff00;
+            font-size: 28px;
+            animation: pulse 2s infinite;
+        }
+        
+        /* ===== PROFILES CONTAINER ===== */
+        .profiles-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .profiles-container {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: stretch;
+            }
+        }
+        
+        /* ===== BORDER/PROFILE CARD (9:16 RATIO) ===== */
+        .border-profile {
+            width: 280px;
+            height: 498px; /* Rasio 9:16 seperti [=] */
+            border: 2px solid #00ff00;
+            padding: 25px 20px;
+            background-color: rgba(0, 20, 0, 0.5);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(var(--translate-start, -100%));
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .border-profile:nth-child(2) {
+            --translate-start: 100%;
+        }
+        
+        /* ===== PROFILE CONTENT ===== */
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .avatar {
+            font-size: 70px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 8px #00ff00);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .profile-info {
+            width: 100%;
+        }
+        
+        .name {
+            font-size: 22px;
+            color: #00ff00;
+            margin-bottom: 8px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .species {
+            font-size: 18px;
+            color: #00cc00;
+            margin-bottom: 8px;
+        }
+        
+        /* ===== SOCIAL LINKS (ALIGN LEFT) ===== */
+        .social-links {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: left;
+        }
+        
+        .social-link {
+            display: flex;
+            align-items: center;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            padding: 12px 15px;
+            transition: all 0.3s;
+            background-color: rgba(0, 255, 0, 0.05);
+            cursor: pointer;
+        }
+        
+        .social-link:hover {
+            background-color: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px #00ff00;
+            transform: translateY(-3px);
+        }
+        
+        .social-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .instagram {
+            color: #e4405f;
+        }
+        
+        .tiktok {
+            color: #69c9d0;
+        }
+        
+        .template-note {
+            font-size: 11px;
+            color: #008800;
+            margin-top: 25px;
+            border-top: 1px dashed #008800;
+            padding-top: 10px;
+            text-align: center;
+        }
+        
+        /* ===== BORDER ENTRY ANIMATION ===== */
+        .border-animation {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 10px;
+            background-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            z-index: 5;
+        }
+        
+        #animation1 {
+            left: 0;
+        }
+        
+        #animation2 {
+            right: 0;
+        }
+        
+        /* ===== ANIMATIONS ===== */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 767px) {
+            .border-profile {
+                width: 90%;
+                max-width: 300px;
+                height: auto;
+                min-height: 500px;
+            }
+            
+            .profiles-container {
+                gap: 40px;
+            }
+            
+            .terminal-header h1 {
+                font-size: 18px;
+            }
+            
+            .title {
+                font-size: 22px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .avatar {
+                font-size: 50px;
+            }
+            
+            .name {
+                font-size: 18px;
+            }
+            
+            .species {
+                font-size: 16px;
+            }
+            
+            .social-link {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix Background -->
+    <div class="matrix-bg" id="matrix-bg"></div>
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="terminal-header">
+            <h1>// EXFURINCO TERMINAL //</h1>
+            <p>Initializing system... <span class="cursor">█</span></p>
+        </div>
+        
+        <div class="hacker-text" id="hacker-text">
+            <div id="terminal-output"></div>
+        </div>
+        
+        <div class="loading-container">
+            <div class="loading-text">
+                <span>MEMPROSES DATA...</span>
+                <span id="percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill">
+                    <div class="progress-blocks" id="progress-blocks"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div id="main-content">
+        <!-- Back Button -->
+        <div id="back-button-container">
+            <a href="https://virrnezz.github.io/furry-community-website/index.html" class="back-button" target="_blank">
+                <i class="fas fa-arrow-left"></i> Kembali ke Furry Community
+            </a>
+        </div>
+        
+        <h1 class="title">// Owner And Co-Owner //</h1>
+        
+        <div class="profiles-container">
+            <!-- Border 1 -->
+            <div class="border-profile" id="border1">
+                <div class="border-animation" id="animation1"></div>
+                <div class="profile-header">
+                    <div class="avatar">[🐺]</div>
+                    <div class="profile-info">
+                        <div class="name">Nama: [Aubrey_Virtual]</div>
+                        <div class="species">Spesies: [Wolf]</div>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <!-- GANTI LINK INI DENGAN LINK INSTAGRAM ASLI -->
+                    <a href="https://instagram.com" class="social-link" target="_blank">
+                        <i class="fab fa-instagram social-icon instagram"></i>
+                        <span class="social-text">Instagram : @Aubrey_Virtual</span>
+                    </a>
+                    
+                    <!-- GANTI LINK INI DENGAN LINK TIKTOK ASLI -->
+                    <a href="https://tiktok.com" class="social-link" target="_blank">
+                        <i class="fab fa-tiktok social-icon tiktok"></i>
+                        <span class="social-text">TikTok : @Aubrey_Virtual</span>
+                    </a>
+                </div>
+                <div class="template-note">
+                    // Aubrey_Virtual Is Owner The EXFURINCO (This Community)//
+                </div>
+            </div>
+            
+            <!-- Border 2 -->
+            <div class="border-profile" id="border2">
+                <div class="border-animation" id="animation2"></div>
+                <div class="profile-header">
+                    <div class="avatar">[🐉]</div>
+                    <div class="profile-info">
+                        <div class="name">Nama: [Nesi the Drax]</div>
+                        <div class="species">Spesies: [Dragon]</div>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <!-- GANTI LINK INI DENGAN LINK INSTAGRAM ASLI -->
+                    <a href="https://instagram.com/wolus_x" class="social-link" target="_blank">
+                        <i class="fab fa-instagram social-icon instagram"></i>
+                        <span class="social-text">Instagram : @Wolus_x</span>
+                    </a>
+                    
+                    <!-- GANTI LINK INI DENGAN LINK TIKTOK ASLI -->
+                    <a href="https://tiktok.com/@NesiNezz_" class="social-link" target="_blank">
+                        <i class="fab fa-tiktok social-icon tiktok"></i>
+                        <span class="social-text">TikTok : @NesiNezz_</span>
+                    </a>
+                </div>
+                <div class="template-note">
+                    // Nesi The Drax Is a Web Developer With AI And Also He Is A AI Prompter//
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== VARIABLES & ELEMENTS =====
+        const hackerScripts = [
+            "> Memulai enkripsi sistem...",
+            "> Mengakses server utama...",
+            "> Memecahkan firewall...",
+            "> Mengumpulkan data pengguna...",
+            "> Menganalisis pola perilaku...",
+            "> Mengekstrak metadata...",
+            "> Melacak lokasi geografis...",
+            "> Mengunduh database furry...",
+            "> Memetakan jaringan sosial...",
+            "> Mendekripsi kata sandi...",
+            "> Mengidentifikasi spesies...",
+            "> Memproses karakter avatar...",
+            "> Membangun koneksi aman...",
+            "> Mengupload profil ke cloud...",
+            "> Sistem siap diinisialisasi..."
+        ];
+        
+        const loadingScreen = document.getElementById('loading-screen');
+        const mainContent = document.getElementById('main-content');
+        const backButtonContainer = document.getElementById('back-button-container');
+        const terminalOutput = document.getElementById('terminal-output');
+        const percent = document.getElementById('percent');
+        const progressFill = document.getElementById('progress-fill');
+        const progressBlocks = document.getElementById('progress-blocks');
+        const border1 = document.getElementById('border1');
+        const border2 = document.getElementById('border2');
+        const animation1 = document.getElementById('animation1');
+        const animation2 = document.getElementById('animation2');
+        const matrixBg = document.getElementById('matrix-bg');
+        
+        // ===== MATRIX BACKGROUND EFFECT =====
+        function createMatrixEffect() {
+            const chars = "01アイウエオカキクケコサシスセソ";
+            const columns = Math.floor(window.innerWidth / 20);
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.style.position = 'absolute';
+                column.style.top = '-100px';
+                column.style.left = i * 20 + 'px';
+                column.style.width = '2px';
+                column.style.color = '#00ff00';
+                column.style.fontSize = '16px';
+                column.style.fontFamily = 'monospace';
+                column.style.whiteSpace = 'nowrap';
+                column.style.textShadow = '0 0 5px #00ff00';
+                column.style.opacity = Math.random() * 0.5 + 0.1;
+                
+                let text = '';
+                const length = Math.floor(Math.random() * 20) + 10;
+                for (let j = 0; j < length; j++) {
+                    text += chars[Math.floor(Math.random() * chars.length)];
+                }
+                column.textContent = text;
+                matrixBg.appendChild(column);
+                animateColumn(column);
+            }
+        }
+        
+        function animateColumn(column) {
+            const speed = Math.random() * 5 + 2;
+            let position = -100;
+            
+            function fall() {
+                position += speed;
+                column.style.top = position + 'px';
+                
+                if (position > window.innerHeight) {
+                    position = -100;
+                    column.style.opacity = Math.random() * 0.5 + 0.1;
+                    
+                    const chars = "01アイウエオカキクケコサシスセソ";
+                    let text = '';
+                    const length = Math.floor(Math.random() * 20) + 10;
+                    for (let j = 0; j < length; j++) {
+                        text += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                    column.textContent = text;
+                }
+                requestAnimationFrame(fall);
+            }
+            fall();
+        }
+        
+        // ===== INITIALIZATION =====
+        createMatrixEffect();
+        let progress = 0;
+        let scriptIndex = 0;
+        const totalBlocks = 20;
+        
+        // Create progress blocks
+        for (let i = 0; i < totalBlocks; i++) {
+            const block = document.createElement('div');
+            block.classList.add('block');
+            progressBlocks.appendChild(block);
+        }
+        
+        // ===== LOADING FUNCTION =====
+        function updateProgress() {
+            if (progress >= 100) {
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        mainContent.style.display = 'block';
+                        backButtonContainer.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            mainContent.style.opacity = '1';
+                            backButtonContainer.style.opacity = '1';
+                            startBorderAnimation();
+                        }, 100);
+                    }, 1500);
+                }, 500);
+                return;
+            }
+            
+            progress += 1;
+            percent.textContent = `${progress}%`;
+            progressFill.style.width = `${progress}%`;
+            
+            const blocks = document.querySelectorAll('.block');
+            const filledBlocks = Math.floor(progress / (100 / totalBlocks));
+            
+            blocks.forEach((block, index) => {
+                if (index < filledBlocks) {
+                    block.classList.add('filled');
+                } else {
+                    block.classList.remove('filled');
+                }
+            });
+            
+            if (progress % 7 === 0 && scriptIndex < hackerScripts.length) {
+                const p = document.createElement('p');
+                p.textContent = hackerScripts[scriptIndex];
+                terminalOutput.appendChild(p);
+                scriptIndex++;
+                
+                const hackerText = document.querySelector('.hacker-text');
+                hackerText.scrollTop = hackerText.scrollHeight;
+            }
+            
+            if (Math.random() > 0.7) {
+                percent.classList.add('glitch');
+                setTimeout(() => {
+                    percent.classList.remove('glitch');
+                }, 300);
+            }
+            
+            const delay = Math.random() * 50 + 50;
+            setTimeout(updateProgress, delay);
+        }
+        
+        // ===== BORDER ENTRY ANIMATION =====
+        function startBorderAnimation() {
+            // Border 1 animation (from left)
+            setTimeout(() => {
+                // Stage 1: |
+                animation1.style.width = '5px';
+                
+                setTimeout(() => {
+                    // Stage 2: l|
+                    animation1.style.width = '10px';
+                    
+                    setTimeout(() => {
+                        // Stage 3: |:|
+                        animation1.style.width = '15px';
+                        
+                        setTimeout(() => {
+                            // Stage 4: []|
+                            animation1.style.width = '100%';
+                            animation1.style.transition = 'width 0.8s ease';
+                            
+                            setTimeout(() => {
+                                border1.style.transition = 'transform 1s ease, opacity 1s ease';
+                                border1.style.transform = 'translateX(0)';
+                                border1.style.opacity = '1';
+                                
+                                setTimeout(() => {
+                                    animation1.style.opacity = '0';
+                                    animation1.style.transition = 'opacity 0.5s ease';
+                                }, 800);
+                            }, 300);
+                        }, 300);
+                    }, 300);
+                }, 300);
+            }, 500);
+            
+            // Border 2 animation (from right) with delay
+            setTimeout(() => {
+                // Stage 1: |
+                animation2.style.width = '5px';
+                
+                setTimeout(() => {
+                    // Stage 2: l|
+                    animation2.style.width = '10px';
+                    
+                    setTimeout(() => {
+                        // Stage 3: |:|
+                        animation2.style.width = '15px';
+                        
+                        setTimeout(() => {
+                            // Stage 4: []|
+                            animation2.style.width = '100%';
+                            animation2.style.transition = 'width 0.8s ease';
+                            
+                            setTimeout(() => {
+                                border2.style.transition = 'transform 1s ease, opacity 1s ease';
+                                border2.style.transform = 'translateX(0)';
+                                border2.style.opacity = '1';
+                                
+                                setTimeout(() => {
+                                    animation2.style.opacity = '0';
+                                    animation2.style.transition = 'opacity 0.5s ease';
+                                }, 800);
+                            }, 300);
+                        }, 300);
+                    }, 300);
+                }, 300);
+            }, 800);
+        }
+        
+        // ===== START LOADING =====
+        setTimeout(updateProgress, 1000);
+        terminalOutput.innerHTML = '<p>> Memulai sistem Furry Hacker Terminal...</p><p>> Memuat komponen antarmuka...</p><p>> Menyiapkan animasi border...</p>';
+        
+        // ===== HOVER EFFECT FOR SOCIAL LINKS =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const socialLinks = document.querySelectorAll('.social-link');
+            
+            socialLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
