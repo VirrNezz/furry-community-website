@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furry Species Portal - Shadow Network</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0a0a0a;
+            --glitch-red: #ff003c;
+            --glitch-blue: #00f3ff;
+            --glitch-green: #00ff4c;
+            --terminal-green: #00ff41;
+            --terminal-dark: #003b00;
+            --text-color: #c0c0c0;
+            --panel-bg: rgba(10, 20, 10, 0.7);
+            --border-glow: rgba(0, 255, 65, 0.3);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 80, 0, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 60, 0.05) 0%, transparent 20%),
+                linear-gradient(to bottom, transparent 95%, rgba(0, 255, 65, 0.03) 100%);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(0deg, 
+                    transparent, 
+                    transparent 2px, 
+                    rgba(0, 20, 0, 0.2) 2px, 
+                    rgba(0, 20, 0, 0.2) 4px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Glitch Background Effect */
+        .glitch-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2300ff41' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+            animation: glitch-bg-move 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes glitch-bg-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-50px, -50px); }
+        }
+
+        /* Header Styles */
+        .header {
+            position: relative;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-glow);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        /* Logo Animation */
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            color: var(--terminal-green);
+            text-shadow: 
+                0 0 10px var(--terminal-green),
+                0 0 20px var(--terminal-green),
+                0 0 30px var(--terminal-green);
+            animation: logo-float 6s ease-in-out infinite, logo-pulse 2s ease-in-out infinite alternate;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo:hover {
+            animation: logo-glitch 0.3s steps(2, end) infinite;
+        }
+
+        @keyframes logo-float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        @keyframes logo-pulse {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes logo-glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .logo-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--glitch-blue);
+            letter-spacing: 3px;
+            margin-top: 5px;
+            text-transform: uppercase;
+            animation: title-flicker 5s infinite;
+        }
+
+        @keyframes title-flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow: 
+                    0 0 7px var(--glitch-blue),
+                    0 0 10px var(--glitch-blue),
+                    0 0 21px var(--glitch-blue);
+            }
+            20%, 24%, 55% {        
+                text-shadow: none;
+            }
+        }
+
+        /* Brutal Glitch Button */
+        .glitch-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            color: var(--glitch-red);
+            border: 1px solid var(--glitch-red);
+            padding: 10px 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            overflow: hidden;
+            z-index: 5;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .glitch-btn:hover {
+            animation: brutal-glitch 0.5s infinite;
+            background-color: rgba(255, 0, 60, 0.1);
+            box-shadow: 
+                0 0 10px var(--glitch-red),
+                0 0 20px var(--glitch-red),
+                inset 0 0 10px rgba(255, 0, 60, 0.2);
+        }
+
+        @keyframes brutal-glitch {
+            0% {
+                transform: translate(0);
+                clip-path: inset(0 0 0 0);
+            }
+            10% {
+                transform: translate(-3px, 1px);
+                clip-path: inset(10% 0 30% 0);
+            }
+            20% {
+                transform: translate(3px, -1px);
+                clip-path: inset(20% 0 10% 0);
+                color: var(--glitch-blue);
+            }
+            30% {
+                transform: translate(-2px, -2px);
+                clip-path: inset(30% 0 20% 0);
+            }
+            40% {
+                transform: translate(2px, 2px);
+                clip-path: inset(10% 0 30% 0);
+                color: var(--glitch-green);
+            }
+            50% {
+                transform: translate(-1px, 3px);
+                clip-path: inset(40% 0 10% 0);
+            }
+            60% {
+                transform: translate(1px, -3px);
+                clip-path: inset(20% 0 40% 0);
+                color: var(--glitch-red);
+            }
+            70% {
+                transform: translate(-3px, 0);
+                clip-path: inset(30% 0 20% 0);
+            }
+            80% {
+                transform: translate(3px, 1px);
+                clip-path: inset(10% 0 30% 0);
+            }
+            90% {
+                transform: translate(-1px, -2px);
+                clip-path: inset(20% 0 10% 0);
+                color: var(--glitch-blue);
+            }
+            100% {
+                transform: translate(0);
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        /* Portal Section */
+        .portal-section {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 5px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                var(--glitch-red), 
+                var(--glitch-blue), 
+                var(--glitch-green));
+            animation: border-flow 3s linear infinite;
+        }
+
+        @keyframes border-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .portal-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--glitch-red);
+            text-align: center;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            padding: 15px;
+            border: 1px dashed var(--glitch-red);
+            animation: label-flicker 4s infinite;
+        }
+
+        @keyframes label-flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 1;
+            }
+            20%, 24%, 55% {
+                opacity: 0.3;
+            }
+        }
+
+        .portal-description {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        /* Species Navigation Grid */
+        .species-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .species-portal {
+            background: rgba(5, 15, 5, 0.8);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .species-portal:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 10px 25px rgba(0, 255, 65, 0.3),
+                0 0 30px rgba(255, 0, 60, 0.2);
+            border-color: var(--glitch-blue);
+        }
+
+        .species-portal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(0, 255, 65, 0.15), 
+                transparent);
+            transition: left 0.7s ease;
+        }
+
+        .species-portal:hover::before {
+            left: 100%;
+        }
+
+        .species-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px currentColor);
+            animation: icon-float 4s ease-in-out infinite;
+        }
+
+        @keyframes icon-float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .species-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--glitch-blue);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .species-desc {
+            color: var(--text-color);
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .portal-link {
+            display: inline-block;
+            background: rgba(0, 40, 0, 0.5);
+            color: var(--terminal-green);
+            border: 1px solid var(--terminal-green);
+            padding: 10px 25px;
+            text-decoration: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .portal-link:hover {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+            transform: translateY(-2px);
+            animation: link-glitch 0.2s steps(2, end);
+        }
+
+        @keyframes link-glitch {
+            0% { transform: translate(0); }
+            25% { transform: translate(-2px, 1px); }
+            50% { transform: translate(2px, -1px); }
+            75% { transform: translate(-1px, 2px); }
+            100% { transform: translate(0); }
+        }
+
+        .link-template {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: rgba(192, 192, 192, 0.6);
+            font-style: italic;
+            word-break: break-all;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: rgba(5, 10, 5, 0.9);
+            border-top: 1px solid var(--border-glow);
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: 50px;
+            position: relative;
+        }
+
+        .footer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--glitch-red), 
+                var(--glitch-blue), 
+                var(--glitch-green), 
+                transparent);
+        }
+
+        .community-info {
+            margin-bottom: 25px;
+        }
+
+        .community-logo {
+            font-size: 3rem;
+            color: var(--glitch-blue);
+            animation: community-logo-spin 10s linear infinite;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        @keyframes community-logo-spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .community-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--terminal-green);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .creator-credit {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            border-top: 1px dashed rgba(0, 255, 65, 0.2);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .creator-credit span {
+            color: var(--glitch-blue);
+            font-weight: bold;
+        }
+
+        /* Terminal Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to bottom, 
+                transparent, 
+                rgba(0, 255, 65, 0.7), 
+                transparent);
+            z-index: 999;
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .species-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .logo-title {
+                font-size: 1.3rem;
+            }
+            
+            .glitch-btn {
+                position: relative;
+                top: auto;
+                right: auto;
+                display: block;
+                margin: 10px auto;
+                width: 80%;
+            }
+            
+            .portal-label {
+                font-size: 1.4rem;
+            }
+            
+            .species-icon {
+                font-size: 2.8rem;
+            }
+            
+            .species-name {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .species-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .species-portal {
+                padding: 20px;
+            }
+            
+            .species-icon {
+                font-size: 2.5rem;
+            }
+            
+            .species-name {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Glitch Background -->
+    <div class="glitch-bg"></div>
+    
+    <!-- Terminal Scanline -->
+    <div class="scanline"></div>
+    
+    <!-- Header with Animated Logo -->
+    <header class="header">
+        <!-- Logo with Animation -->
+        <div class="logo-container">
+            <div class="logo" id="mainLogo">⎈</div>
+            <div class="logo-title" id="siteTitle">SPECIES PORTAL</div>
+        </div>
+        
+        <!-- Brutal Glitch Back Button -->
+        <a href="https://virrnezz.github.io/furry-community-website/index.html" class="glitch-btn">
+            <i class="fas fa-arrow-left"></i> BACK TO DASHBOARD
+        </a>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Species Portal Section -->
+        <section class="portal-section">
+            <!-- Portal Label -->
+            <div class="portal-label">~~/PORTAL SPESIES\~~</div>
+            
+            <div class="portal-description">
+                <p>Pilih kategori spesies untuk mengakses daftar anggota furry.</p>
+                <p>Setiap portal akan membawa Anda ke halaman anggota dengan spesies yang sesuai.</p>
+            </div>
+            
+            <!-- Species Navigation Grid -->
+            <div class="species-grid" id="speciesContainer">
+                <!-- Species portals will be inserted here by JavaScript -->
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer with Community Info -->
+    <footer class="footer">
+        <div class="community-info">
+            <div class="community-logo">⎈</div>
+            <div class="community-name" id="communityName">[NAMA KOMUNITAS]</div>
+        </div>
+        
+        <div class="creator-credit">
+            Web creator by <span id="webCreator">[NAMA PEMBUAT WEB]</span>
+        </div>
+    </footer>
+
+    <script>
+        // ==============================
+        // DATA TEMPLATE - MUDAH DIEDIT
+        // ==============================
+        
+        // Data Komunitas (Ganti dengan data asli)
+        const communityData = {
+            name: "[NAMA KOMUNITAS]",
+            creator: "[NAMA PEMBUAT WEB]"
+        };
+        
+        // Data Spesies Portal (Ganti link dengan URL asli)
+        // Format: {icon, name, description, link}
+        const speciesData = [
+            {
+                icon: "🐺",
+                name: "CANINE",
+                description: "Serigala, Rubah, Anjing, dan spesies canine lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🐱",
+                name: "FELINE",
+                description: "Kucing, Singa, Harimau, dan spesies feline lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🐉",
+                name: "REPTILIAN",
+                description: "Naga, Kadal, Ular, dan spesies reptil lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🦅",
+                name: "AVIAN",
+                description: "Burung, Elang, Rajawali, dan spesies avian lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🦌",
+                name: "UNGULATE",
+                description: "Rusa, Kuda, dan spesies ungulate lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🦝",
+                name: "MUSTELID",
+                description: "Rakun, Musang, dan spesies mustelid lainnya.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "🧬",
+                name: "HYBRID",
+                description: "Spesies campuran atau hybrid dari berbagai jenis.",
+                link: "isi link di sini"
+            },
+            {
+                icon: "❓",
+                name: "OTHER",
+                description: "Spesies lain yang tidak termasuk dalam kategori di atas.",
+                link: "isi link di sini"
+            }
+        ];
+        
+        // ==============================
+        // FUNGSI UNTUK MEMUAT DATA
+        // ==============================
+        
+        // Fungsi untuk memuat data spesies portal
+        function loadSpeciesData() {
+            const container = document.getElementById('speciesContainer');
+            container.innerHTML = '';
+            
+            speciesData.forEach(species => {
+                const speciesPortal = document.createElement('div');
+                speciesPortal.className = 'species-portal';
+                
+                speciesPortal.innerHTML = `
+                    <div class="species-icon">${species.icon}</div>
+                    <h3 class="species-name">${species.name}</h3>
+                    <p class="species-desc">${species.description}</p>
+                    <a href="${species.link}" class="portal-link" target="_blank">
+                        ENTER PORTAL
+                    </a>
+                    <span class="link-template">${species.link}</span>
+                `;
+                
+                container.appendChild(speciesPortal);
+            });
+        }
+        
+        // Fungsi untuk memuat data komunitas
+        function loadCommunityData() {
+            document.getElementById('communityName').textContent = communityData.name;
+            document.getElementById('webCreator').textContent = communityData.creator;
+        }
+        
+        // Fungsi untuk logo animation ke atas
+        function setupLogoAnimation() {
+            const logo = document.getElementById('mainLogo');
+            let isAtTop = false;
+            
+            logo.addEventListener('click', function() {
+                if (!isAtTop) {
+                    // Animate logo to top
+                    this.style.position = 'fixed';
+                    this.style.top = '20px';
+                    this.style.left = '20px';
+                    this.style.fontSize = '2rem';
+                    this.style.zIndex = '1000';
+                    this.style.animation = 'logo-glitch 0.5s infinite';
+                    isAtTop = true;
+                    
+                    // Add reset button
+                    const resetBtn = document.createElement('button');
+                    resetBtn.textContent = 'RESET LOGO';
+                    resetBtn.style.position = 'fixed';
+                    resetBtn.style.top = '60px';
+                    resetBtn.style.left = '20px';
+                    resetBtn.style.zIndex = '1000';
+                    resetBtn.style.background = 'rgba(255, 0, 60, 0.2)';
+                    resetBtn.style.color = 'var(--glitch-red)';
+                    resetBtn.style.border = '1px solid var(--glitch-red)';
+                    resetBtn.style.padding = '5px 10px';
+                    resetBtn.style.fontFamily = 'inherit';
+                    resetBtn.style.cursor = 'pointer';
+                    resetBtn.id = 'resetLogoBtn';
+                    
+                    resetBtn.addEventListener('click', function() {
+                        logo.style.position = '';
+                        logo.style.top = '';
+                        logo.style.left = '';
+                        logo.style.fontSize = '';
+                        logo.style.animation = '';
+                        logo.style.zIndex = '';
+                        isAtTop = false;
+                        this.remove();
+                    });
+                    
+                    document.body.appendChild(resetBtn);
+                }
+            });
+        }
+        
+        // Fungsi untuk efek glitch acak pada portal
+        function randomGlitchEffect() {
+            const portals = document.querySelectorAll('.species-portal');
+            
+            portals.forEach(portal => {
+                // Random chance untuk glitch
+                if (Math.random() > 0.8) {
+                    // Simpan style asli
+                    const originalBorderColor = portal.style.borderColor;
+                    const originalBoxShadow = portal.style.boxShadow;
+                    
+                    // Apply glitch effect
+                    portal.style.borderColor = Math.random() > 0.5 ? 'var(--glitch-red)' : 'var(--glitch-blue)';
+                    portal.style.boxShadow = `0 0 20px ${Math.random() > 0.5 ? 'var(--glitch-red)' : 'var(--glitch-blue)'}`;
+                    
+                    // Reset setelah waktu acak
+                    setTimeout(() => {
+                        portal.style.borderColor = originalBorderColor;
+                        portal.style.boxShadow = originalBoxShadow;
+                    }, Math.random() * 300 + 100);
+                }
+            });
+        }
+        
+        // Fungsi untuk efek typing pada deskripsi portal
+        function typeWriterEffect() {
+            const descriptions = document.querySelectorAll('.portal-description p');
+            
+            descriptions.forEach(desc => {
+                const originalText = desc.textContent;
+                desc.textContent = '';
+                let i = 0;
+                
+                function typeChar() {
+                    if (i < originalText.length) {
+                        desc.textContent += originalText.charAt(i);
+                        i++;
+                        setTimeout(typeChar, Math.random() * 50 + 30);
+                    }
+                }
+                
+                // Mulai efek typing setelah delay acak
+                setTimeout(typeChar, Math.random() * 1000 + 500);
+            });
+        }
+        
+        // ==============================
+        // INISIALISASI SAAT HALAMAN DIMUAT
+        // ==============================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data
+            loadSpeciesData();
+            loadCommunityData();
+            
+            // Setup logo animation
+            setupLogoAnimation();
+            
+            // Random glitch effects interval
+            setInterval(randomGlitchEffect, 1500);
+            
+            // Typewriter effect
+            setTimeout(typeWriterEffect, 1000);
+            
+            // Console log style
+            console.log('%c⚡ SPECIES PORTAL - SHADOW NETWORK ⚡', 'color: #00ff41; font-family: monospace; font-size: 16px; font-weight: bold;');
+            console.log('%c>> Portal spesies aktif...', 'color: #00f3ff; font-family: monospace;');
+            console.log('%c>> Siapkan link untuk setiap kategori...', 'color: #ff003c; font-family: monospace;');
+            console.log('%c>> EDIT: Ganti "isi link di sini" dengan URL halaman anggota', 'color: #ff9900; font-family: monospace;');
+        });
+    </script>
+</body>
+</html>
