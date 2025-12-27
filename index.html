@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>EXFURINCO :: TERMINAL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: none;
+        }
+
+        body {
+            background: #000;
+            color: #c0c0c0;
+            font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+            font-size: 13px;
+            line-height: 1.15;
+            height: 100vh;
+            overflow: hidden;
+            cursor: text;
+        }
+
+        /* CRT Scanlines */
+        .crt::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 255, 0, 0.02) 50%
+            );
+            background-size: 100% 3px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        /* Main Terminal Container */
+        #terminal-window {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 1px solid #333;
+            background: #0a0a0a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 24px;
+            background: #002200;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            user-select: none;
+        }
+
+        .title-text {
+            flex: 1;
+            color: #00ff00;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 1px;
+        }
+
+        .win-btn {
+            width: 18px;
+            height: 16px;
+            background: #333;
+            color: #ccc;
+            border: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .win-btn:hover {
+            background: #444;
+        }
+
+        .close-btn:hover {
+            background: #c00;
+            color: white;
+        }
+
+        /* Terminal Content */
+        #terminal-content {
+            flex: 1;
+            padding: 8px 10px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Path Header */
+        .path-header {
+            color: #00ff00;
+            margin-bottom: 2px;
+            height: 16px;
+            line-height: 16px;
+            white-space: pre;
+        }
+
+        /* Terminal Lines */
+        .line {
+            height: 16px;
+            line-height: 16px;
+            margin: 0;
+            padding: 0;
+            white-space: pre;
+            opacity: 0;
+        }
+
+        .prompt {
+            color: #8a2be2;
+        }
+
+        .command {
+            color: #fff;
+        }
+
+        .output {
+            color: #c0c0c0;
+            padding-left: 2px;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .error {
+            color: #ff3333;
+        }
+
+        .dim {
+            color: #666;
+        }
+
+        .cyan {
+            color: #00ffff;
+        }
+
+        .yellow {
+            color: #ffff00;
+        }
+
+        .purple {
+            color: #8a2be2;
+        }
+
+        /* Cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #00ff00;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+            margin-left: 1px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: inline-block;
+            width: 150px;
+            height: 1px;
+            background: #003300;
+            margin-left: 10px;
+            vertical-align: middle;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00ff00;
+        }
+
+        /* Matrix Background */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: -1;
+        }
+
+        /* Menu Styles */
+        .menu-container {
+            margin: 10px 0;
+            border-left: 1px solid #333;
+            padding-left: 10px;
+        }
+
+        .menu-title {
+            color: #00ffff;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .menu-item {
+            margin: 8px 0;
+            padding-left: 10px;
+        }
+
+        .menu-item a {
+            color: #c0c0c0;
+            text-decoration: none;
+            display: block;
+            padding: 2px 5px;
+            border: 1px solid transparent;
+        }
+
+        .menu-item a:hover {
+            background: #002200;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .menu-hint {
+            color: #666;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        /* Form Styles */
+        .form-line {
+            margin: 8px 0;
+        }
+
+        .form-label {
+            color: #00ffff;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .form-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #00ff00;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            width: 200px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .form-button {
+            background: #002200;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 3px 10px;
+            font-family: 'Consolas', monospace;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .form-button:hover {
+            background: #003300;
+        }
+
+        /* Info Box */
+        .info-box {
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            background: #001100;
+        }
+
+        /* Error Message */
+        .error-msg {
+            color: #ff3333;
+            border: 1px solid #ff3333;
+            padding: 10px;
+            margin: 10px 0;
+            background: #330000;
+        }
+
+        /* Success Message */
+        .success-msg {
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin: 10px 0;
+            background: #003300;
+        }
+
+        /* Link Template Message */
+        .template-msg {
+            color: #ffff00;
+            border: 1px solid #ffff00;
+            padding: 10px;
+            margin: 10px 0;
+            background: #333300;
+        }
+
+        /* Animations */
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 0); }
+            40% { transform: translate(1px, 0); }
+            60% { transform: translate(-1px, 0); }
+            80% { transform: translate(1px, 0); }
+            100% { transform: translate(0); }
+        }
+
+        .glitch {
+            animation: glitch 0.3s linear;
+        }
+
+        /* Scrollbar */
+        #terminal-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #terminal-content::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        #terminal-content::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        #terminal-content::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="crt">
+    <canvas id="matrix-bg"></canvas>
+    
+    <div id="terminal-window">
+        <div class="title-bar">
+            <div class="title-text">EXFURINCO</div>
+            <div class="window-controls">
+                <div class="win-btn" onclick="minimizeWindow()">_</div>
+                <div class="win-btn" onclick="maximizeWindow()">□</div>
+                <div class="win-btn close-btn" onclick="closeWindow()">×</div>
+            </div>
+        </div>
+        
+        <div id="terminal-content">
+            <!-- Content will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            
+            // ===== CONFIG =====
+            const config = {
+                typeSpeed: 40,
+                lineDelay: 300,
+                user: 'exfur',
+                host: 'inco',
+                maxWidth: 70
+            };
+            
+            // ===== DATABASE FUNCTIONS (LocalStorage) =====
+            const Database = {
+                // Initialize database
+                init: function() {
+                    if (!localStorage.getItem('exfurincoUsers')) {
+                        localStorage.setItem('exfurincoUsers', JSON.stringify([]));
+                    }
+                    if (!localStorage.getItem('exfurincoSettings')) {
+                        localStorage.setItem('exfurincoSettings', JSON.stringify({
+                            totalRegistrations: 0,
+                            lastUserID: 1000,
+                            communityMembers: []
+                        }));
+                    }
+                },
+                
+                // Check if user exists
+                userExists: function(username) {
+                    const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                    return users.some(user => user.username.toLowerCase() === username.toLowerCase());
+                },
+                
+                // Register new user
+                registerUser: function(userData) {
+                    const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                    const settings = JSON.parse(localStorage.getItem('exfurincoSettings'));
+                    
+                    // Generate user ID
+                    const userID = settings.lastUserID + 1;
+                    
+                    const newUser = {
+                        id: userID,
+                        username: userData.username,
+                        fursona: userData.fursona,
+                        color: userData.color,
+                        accessCode: userData.accessCode,
+                        registrationDate: new Date().toISOString(),
+                        lastLogin: null,
+                        loginCount: 0,
+                        isActive: true
+                    };
+                    
+                    users.push(newUser);
+                    localStorage.setItem('exfurincoUsers', JSON.stringify(users));
+                    
+                    // Update settings
+                    settings.totalRegistrations = users.length;
+                    settings.lastUserID = userID;
+                    
+                    // Add to community members
+                    settings.communityMembers.push({
+                        id: userID,
+                        name: userData.username,
+                        fursona: userData.fursona,
+                        joinDate: new Date().toLocaleDateString()
+                    });
+                    
+                    localStorage.setItem('exfurincoSettings', JSON.stringify(settings));
+                    
+                    return newUser;
+                },
+                
+                // Authenticate user
+                authenticateUser: function(username, accessCode) {
+                    const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                    const user = users.find(u => 
+                        u.username.toLowerCase() === username.toLowerCase() && 
+                        u.accessCode === accessCode
+                    );
+                    
+                    if (user) {
+                        // Update last login
+                        user.lastLogin = new Date().toISOString();
+                        user.loginCount = (user.loginCount || 0) + 1;
+                        localStorage.setItem('exfurincoUsers', JSON.stringify(users));
+                        
+                        return user;
+                    }
+                    
+                    return null;
+                },
+                
+                // Get all registered users (admin only)
+                getAllUsers: function() {
+                    return JSON.parse(localStorage.getItem('exfurincoUsers'));
+                },
+                
+                // Get community stats
+                getStats: function() {
+                    const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                    const settings = JSON.parse(localStorage.getItem('exfurincoSettings'));
+                    
+                    return {
+                        totalUsers: users.length,
+                        activeUsers: users.filter(u => u.isActive).length,
+                        totalRegistrations: settings.totalRegistrations,
+                        communityMembers: settings.communityMembers
+                    };
+                },
+                
+                // Check if any user is registered
+                hasRegisteredUsers: function() {
+                    const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                    return users.length > 0;
+                }
+            };
+            
+            // ===== STATE =====
+            let currentPath = '~';
+            let isTyping = false;
+            let lineIndex = 0;
+            let isLoggedIn = sessionStorage.getItem('exfurincoLoggedIn') === 'true';
+            let currentUser = JSON.parse(sessionStorage.getItem('exfurincoCurrentUser') || 'null');
+            let currentPage = 'boot';
+            
+            // ===== ELEMENTS =====
+            const content = document.getElementById('terminal-content');
+            const canvas = document.getElementById('matrix-bg');
+            const ctx = canvas.getContext('2d');
+            
+            // ===== SETUP CANVAS =====
+            function setupCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                const chars = "EXFURINCO0123456789";
+                const fontSize = 12;
+                const columns = Math.floor(canvas.width / fontSize);
+                const drops = new Array(columns).fill(1);
+                
+                function draw() {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = fontSize + 'px monospace';
+                    
+                    for (let i = 0; i < drops.length; i++) {
+                        const char = chars[Math.floor(Math.random() * chars.length)];
+                        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                        
+                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                }
+                
+                setInterval(draw, 50);
+            }
+            
+            // ===== PATH MANAGEMENT =====
+            function updatePathHeader() {
+                const pathDisplay = currentPath === '~' ? '~' : currentPath;
+                return `┌─[${config.user}@${config.host}]─[${pathDisplay}]`;
+            }
+            
+            function changePath(newPath) {
+                currentPath = newPath;
+            }
+            
+            // ===== TERMINAL LINES =====
+            function createLine(type, content = '', cls = '') {
+                const line = document.createElement('div');
+                line.className = `line ${type} ${cls}`;
+                line.id = `line-${lineIndex++}`;
+                
+                switch(type) {
+                    case 'path':
+                        line.innerHTML = `<span class="path-header">${content}</span>`;
+                        break;
+                    case 'command':
+                        line.innerHTML = `<span class="prompt">$</span> <span class="command">${content}</span>`;
+                        break;
+                    case 'output':
+                        line.innerHTML = `<span class="output">${content}</span>`;
+                        break;
+                    case 'system':
+                        line.innerHTML = `<span class="dim">${content}</span>`;
+                        break;
+                    case 'menu':
+                        line.innerHTML = content;
+                        break;
+                }
+                
+                return line;
+            }
+            
+            // ===== TYPEWRITER EFFECT =====
+            function typeLine(line, text, speed = config.typeSpeed) {
+                return new Promise(resolve => {
+                    let i = 0;
+                    const textEl = line.querySelector('.command, .output, .dim, .path-header');
+                    
+                    function typeChar() {
+                        if (i < text.length) {
+                            if (textEl) {
+                                textEl.textContent += text.charAt(i);
+                            }
+                            i++;
+                            setTimeout(typeChar, speed);
+                        } else {
+                            resolve();
+                        }
+                    }
+                    
+                    line.style.opacity = '1';
+                    if (textEl) {
+                        textEl.textContent = '';
+                        typeChar();
+                    } else {
+                        // Jika tidak ada textEl, langsung resolve
+                        resolve();
+                    }
+                });
+            }
+            
+            // ===== BOOT SEQUENCE =====
+            async function bootSequence() {
+                try {
+                    isTyping = true;
+                    currentPage = 'boot';
+                    
+                    // Clear terminal
+                    content.innerHTML = '';
+                    lineIndex = 0;
+                    
+                    // Initial path
+                    const pathLine = createLine('path', updatePathHeader());
+                    content.appendChild(pathLine);
+                    await typeLine(pathLine, updatePathHeader());
+                    await wait(500);
+                    
+                    // System boot
+                    await showLine('command', 'system_check --all');
+                    await wait(300);
+                    await showLine('output', '[✓] CPU: EXFUR_Processor @ 3.2GHz', 'success');
+                    await wait(150);
+                    await showLine('output', '[✓] RAM: 131072K OK', 'success');
+                    await wait(150);
+                    await showLine('output', '[✓] Storage: EXFUR_SSD 256.0GB', 'success');
+                    await wait(300);
+                    
+                    // Kernel load
+                    await showLine('command', 'load_kernel --encrypted');
+                    await showProgress(1200);
+                    await showLine('output', 'Kernel loaded: exfurinco_kernel.sys', 'success');
+                    await wait(400);
+                    
+                    // Services
+                    await showLine('command', 'start_services --all');
+                    await wait(200);
+                    await showLine('output', 'fursona.service     [RUNNING]', 'success');
+                    await wait(100);
+                    await showLine('output', 'pawprint_drv       [LOADED]', 'success');
+                    await wait(100);
+                    await showLine('output', 'exfurinco_net      [ACTIVE]', 'success');
+                    await wait(400);
+                    
+                    // Database service
+                    await showLine('command', 'database_init --local');
+                    await wait(300);
+                    await showLine('output', 'Loading user database...', 'dim');
+                    await showProgress(600);
+                    
+                    // Check database status
+                    const hasUsers = Database.hasRegisteredUsers();
+                    if (hasUsers) {
+                        const stats = Database.getStats();
+                        await showLine('output', `Database loaded: ${stats.totalUsers} user(s) found`, 'success');
+                    } else {
+                        await showLine('output', 'Database: No registered users found', 'dim');
+                    }
+                    
+                    await wait(400);
+                    
+                    // Network
+                    await showLine('command', 'network_init --secure');
+                    await wait(300);
+                    await showLine('output', 'IP: 192.168.1.77', 'dim');
+                    await wait(100);
+                    await showLine('output', 'Gateway: 192.168.1.1', 'dim');
+                    await wait(100);
+                    await showLine('output', 'DNS: 1.1.1.1', 'dim');
+                    await wait(300);
+                    await showLine('output', 'Connecting to EXFURINCO Network...', 'dim');
+                    await showProgress(800);
+                    await showLine('output', 'Connection established [ENCRYPTED]', 'success');
+                    await wait(500);
+                    
+                    // Authentication check
+                    await showLine('command', 'authenticate --system');
+                    await wait(400);
+                    await showLine('output', 'Checking user credentials...', 'dim');
+                    await showProgress(600);
+                    
+                    // Check if user is logged in
+                    if (isLoggedIn && currentUser) {
+                        await showLine('output', `Welcome back, ${currentUser.username}!`, 'success');
+                        await wait(400);
+                        showMainMenu();
+                    } else if (hasUsers) {
+                        // Database has users, show login
+                        await showLine('output', 'Please login to continue', 'dim');
+                        await wait(400);
+                        showLoginForm();
+                    } else {
+                        // No users in database, show registration
+                        await showLine('output', 'No users found in database', 'error');
+                        await wait(400);
+                        await showLine('output', 'Redirecting to first-time registration...', 'dim');
+                        await wait(800);
+                        showRegistrationForm();
+                    }
+                    
+                    isTyping = false;
+                } catch (error) {
+                    console.error('Boot sequence error:', error);
+                    isTyping = false;
+                    // Fallback ke menu utama jika ada error
+                    showMainMenu();
+                }
+            }
+            
+            // ===== REGISTRATION FORM =====
+            function showRegistrationForm() {
+                currentPage = 'register';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/first_time_registration]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'EXFURINCO - FIRST TIME REGISTRATION', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                const info = createLine('output', 'Welcome to EXFURINCO! Please create your account:', 'dim');
+                content.appendChild(info);
+                info.style.opacity = '1';
+                
+                // Check if database already has users
+                const hasUsers = Database.hasRegisteredUsers();
+                if (hasUsers) {
+                    const warning = createLine('output', 'NOTE: Registration system already has users. Redirecting to login...', 'error');
+                    content.appendChild(warning);
+                    warning.style.opacity = '1';
+                    
+                    setTimeout(() => {
+                        showLoginForm();
+                    }, 2000);
+                    return;
+                }
+                
+                // Create form container
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="form-line">
+                        <span class="form-label">Furry Name:</span>
+                        <input type="text" id="furryName" class="form-input" maxlength="20" placeholder="Enter unique name">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Fursona Type:</span>
+                        <input type="text" id="fursonaType" class="form-input" maxlength="20" placeholder="e.g., Wolf, Fox, Dragon">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Favorite Color:</span>
+                        <input type="text" id="favColor" class="form-input" maxlength="15" placeholder="e.g., Midnight Blue">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Access Code:</span>
+                        <input type="password" id="accessCode" class="form-input" maxlength="15" placeholder="Create secure code">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Confirm Code:</span>
+                        <input type="password" id="confirmCode" class="form-input" maxlength="15" placeholder="Repeat access code">
+                    </div>
+                    <div class="form-line">
+                        <button class="form-button" onclick="processRegistration()">Create Account</button>
+                        <button class="form-button" onclick="bootSequence()" style="margin-left: 10px;">Cancel</button>
+                    </div>
+                    <div class="menu-hint">
+                        Note: This registration cannot be undone. Your data will be stored locally.
+                    </div>
+                `;
+                content.appendChild(formContainer);
+                
+                // Add cursor to first input
+                setTimeout(() => {
+                    const input = document.getElementById('furryName');
+                    if (input) input.focus();
+                }, 100);
+            }
+            
+            // ===== LOGIN FORM =====
+            function showLoginForm() {
+                currentPage = 'login';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/login]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'EXFURINCO LOGIN', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                // Show database stats
+                const stats = Database.getStats();
+                const statsLine = createLine('output', `Database: ${stats.totalUsers} registered user(s)`, 'dim');
+                content.appendChild(statsLine);
+                statsLine.style.opacity = '1';
+                
+                // Create form container
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="form-line">
+                        <span class="form-label">Furry Name:</span>
+                        <input type="text" id="loginName" class="form-input" maxlength="20" placeholder="Your registered name">
+                    </div>
+                    <div class="form-line">
+                        <span class="form-label">Access Code:</span>
+                        <input type="password" id="loginCode" class="form-input" maxlength="15" placeholder="Your access code">
+                    </div>
+                    <div class="form-line">
+                        <button class="form-button" onclick="processLogin()">Login to EXFURINCO</button>
+                        <button class="form-button" onclick="bootSequence()" style="margin-left: 10px;">Cancel</button>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showResetOptions()">Forgot Access Code?</a>
+                        <span class="menu-hint">- Contact administrator</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showDatabaseInfo()">View Database Info</a>
+                        <span class="menu-hint">- System information</span>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+                
+                // Add cursor to first input
+                setTimeout(() => {
+                    const input = document.getElementById('loginName');
+                    if (input) input.focus();
+                }, 100);
+            }
+            
+            // ===== RESET OPTIONS =====
+            function showResetOptions() {
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/account_recovery]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'ACCOUNT RECOVERY', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                const info = createLine('output', 'For security reasons, please contact system administrator:', 'dim');
+                content.appendChild(info);
+                info.style.opacity = '1';
+                
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="info-box">
+                        <div class="menu-title">CONTACT ADMINISTRATOR</div>
+                        <div class="menu-item">• Email: admin@exfurinco.dark</div>
+                        <div class="menu-item">• Signal: #EXF-RECOVERY</div>
+                        <div class="menu-item">• Include your Furry Name and registration date</div>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showLoginForm()">← Back to Login</a>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+            }
+            
+            // ===== DATABASE INFO =====
+            function showDatabaseInfo() {
+                const stats = Database.getStats();
+                const users = Database.getAllUsers();
+                
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/database_info]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'DATABASE INFORMATION', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="info-box">
+                        <div class="menu-title">SYSTEM STATISTICS</div>
+                        <div class="menu-item">• Total Registrations: ${stats.totalUsers}</div>
+                        <div class="menu-item">• Active Users: ${stats.activeUsers}</div>
+                        <div class="menu-item">• Storage: LocalStorage</div>
+                        <div class="menu-item">• Last User ID: ${stats.totalRegistrations > 0 ? stats.totalRegistrations + 1000 : 'None'}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="menu-title">REGISTERED USERS (${users.length})</div>
+                        ${users.map(user => `
+                            <div class="menu-item">
+                                <strong>${user.username}</strong>
+                                <div class="dim">ID: ${user.id} | Fursona: ${user.fursona}</div>
+                                <div class="dim">Last Login: ${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showLoginForm()">← Back to Login</a>
+                    </div>
+                    <div class="menu-item">
+                        <button class="form-button" onclick="clearDatabase()" style="background: #660000;">Clear Database</button>
+                        <span class="menu-hint">- Warning: This will delete all users!</span>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+            }
+            
+            // ===== CLEAR DATABASE =====
+            function clearDatabase() {
+                if (confirm('WARNING: This will delete ALL registered users!\nAre you absolutely sure?')) {
+                    localStorage.removeItem('exfurincoUsers');
+                    localStorage.removeItem('exfurincoSettings');
+                    Database.init();
+                    
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'success-msg';
+                    successMsg.innerHTML = 'Database cleared successfully! All users have been removed.<br>System will restart...';
+                    content.appendChild(successMsg);
+                    
+                    setTimeout(() => {
+                        bootSequence();
+                    }, 2000);
+                }
+            }
+            
+            // ===== MAIN MENU =====
+            function showMainMenu() {
+                currentPage = 'main';
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', `┌─[${currentUser ? currentUser.username : 'guest'}@inco]─[/main]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const welcome = createLine('output', `Welcome ${currentUser ? currentUser.username : 'User'} to EXFURINCO`, 'success');
+                content.appendChild(welcome);
+                welcome.style.opacity = '1';
+                
+                const userInfo = createLine('output', `Fursona: ${currentUser ? currentUser.fursona : 'Unknown'} | ID: ${currentUser ? currentUser.id : 'N/A'}`, 'dim');
+                content.appendChild(userInfo);
+                userInfo.style.opacity = '1';
+                
+                // Create menu container dengan LINK LENGKAP
+                const menuContainer = document.createElement('div');
+                menuContainer.className = 'menu-container';
+                menuContainer.innerHTML = `
+                    <div class="menu-title">MAIN MENU</div>
+                    <div class="menu-item">
+                        <a href="https://virrnezz.github.io/furry-community-website/member.html" target="_blank" onclick="return handleExternalLink(this)">[1] Nama Anggota</a>
+                        <span class="menu-hint">- View all community members</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="https://virrnezz.github.io/furry-community-website/Founder.html" target="_blank" onclick="return handleExternalLink(this)">[2] Pendiri Komunitas</a>
+                        <span class="menu-hint">- Community founders information</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showTemplatePage('wishlist')">[3] Wishlist Anggota</a>
+                        <span class="menu-hint">- Member wishlists and desires</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showTemplatePage('tracking')">[4] Tracking Anggota</a>
+                        <span class="menu-hint">- Member activity tracking</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showTemplatePage('info')">[5] Informasi Anggota</a>
+                        <span class="menu-hint">- Detailed member information</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showTemplatePage('events')">[6] Event Komunitas</a>
+                        <span class="menu-hint">- Upcoming furry events</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showAccountInfo()">[7] Account Info</a>
+                        <span class="menu-hint">- Your account details</span>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="logout()">[8] Logout</a>
+                        <span class="menu-hint">- Exit system</span>
+                    </div>
+                `;
+                content.appendChild(menuContainer);
+                
+                const commandLine = createLine('command', '');
+                content.appendChild(commandLine);
+                commandLine.style.opacity = '1';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                commandLine.querySelector('.command').appendChild(cursor);
+            }
+            
+            // ===== EXTERNAL LINK HANDLER =====
+            function handleExternalLink(linkElement) {
+                const href = linkElement.getAttribute('href');
+                
+                // Tampilkan konfirmasi untuk link eksternal
+                const confirmMsg = `You are about to open an external link:\n\n${href}\n\nDo you want to continue?`;
+                
+                if (confirm(confirmMsg)) {
+                    // Biarkan link terbuka di tab baru (target="_blank")
+                    return true;
+                } else {
+                    // Batalkan navigasi
+                    return false;
+                }
+            }
+            
+            // ===== TEMPLATE PAGE (untuk link yang belum ada) =====
+            function showTemplatePage(pageType) {
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', `┌─[${currentUser ? currentUser.username : 'guest'}@inco]─[/${pageType}]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                let title = '';
+                let description = '';
+                let templateLink = '#';
+                
+                switch(pageType) {
+                    case 'wishlist':
+                        title = 'WISHLIST ANGGOTA';
+                        description = 'Halaman untuk melihat wishlist anggota komunitas EXFURINCO';
+                        templateLink = 'isi_link_wishlist_di_sini.html';
+                        break;
+                    case 'tracking':
+                        title = 'TRACKING ANGGOTA';
+                        description = 'Halaman untuk tracking aktivitas anggota komunitas';
+                        templateLink = 'isi_link_tracking_di_sini.html';
+                        break;
+                    case 'info':
+                        title = 'INFORMASI ANGGOTA';
+                        description = 'Halaman informasi detail anggota komunitas';
+                        templateLink = 'isi_link_info_anggota_di_sini.html';
+                        break;
+                    case 'events':
+                        title = 'EVENT KOMUNITAS';
+                        description = 'Halaman event dan kegiatan komunitas EXFURINCO';
+                        templateLink = 'isi_link_event_di_sini.html';
+                        break;
+                }
+                
+                const titleLine = createLine('output', title, 'cyan');
+                content.appendChild(titleLine);
+                titleLine.style.opacity = '1';
+                
+                const descLine = createLine('output', description, 'dim');
+                content.appendChild(descLine);
+                descLine.style.opacity = '1';
+                
+                // Tampilkan template message
+                const templateContainer = document.createElement('div');
+                templateContainer.className = 'menu-container';
+                templateContainer.innerHTML = `
+                    <div class="template-msg">
+                        <strong>LINK TEMPLATE</strong><br>
+                        Halaman ini membutuhkan link eksternal yang belum diisi.<br>
+                        Silakan tambahkan link yang sesuai pada kode HTML.
+                    </div>
+                    
+                    <div class="info-box">
+                        <div class="menu-title">INFORMASI LINK</div>
+                        <div class="menu-item">
+                            <strong>Jenis Halaman:</strong> ${title}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Variabel Link:</strong> ${templateLink}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Status:</strong> <span style="color: #ff9900;">Link belum diisi</span>
+                        </div>
+                        <div class="menu-item">
+                            <strong>Instruksi:</strong> Ganti href pada menu utama dengan link yang valid
+                        </div>
+                    </div>
+                    
+                    <div class="info-box">
+                        <div class="menu-title">CONTOH LINK YANG SUDAH ADA</div>
+                        <div class="menu-item">
+                            <a href="https://virrnezz.github.io/furry-community-website/member.html" target="_blank" onclick="return handleExternalLink(this)">
+                                Nama Anggota - Link Aktif
+                            </a>
+                            <div class="dim">Link: https://virrnezz.github.io/furry-community-website/member.html</div>
+                        </div>
+                        <div class="menu-item">
+                            <a href="https://virrnezz.github.io/furry-community-website/Founder.html" target="_blank" onclick="return handleExternalLink(this)">
+                                Pendiri Komunitas - Link Aktif
+                            </a>
+                            <div class="dim">Link: https://virrnezz.github.io/furry-community-website/Founder.html</div>
+                        </div>
+                    </div>
+                    
+                    <div class="menu-item">
+                        <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                    </div>
+                    
+                    <div class="menu-item">
+                        <button class="form-button" onclick="testTemplateLink('${templateLink}')">Test Link Template</button>
+                        <span class="menu-hint">- Coba buka link template</span>
+                    </div>
+                `;
+                content.appendChild(templateContainer);
+                
+                const commandLine = createLine('command', '');
+                content.appendChild(commandLine);
+                commandLine.style.opacity = '1';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                commandLine.querySelector('.command').appendChild(cursor);
+            }
+            
+            // ===== TEST TEMPLATE LINK =====
+            function testTemplateLink(link) {
+                if (link && link !== '#' && !link.includes('isi_link')) {
+                    // Jika link valid, coba buka
+                    window.open(link, '_blank');
+                } else {
+                    alert('Link masih dalam format template. Silakan ganti dengan link yang valid di kode HTML.');
+                    
+                    // Tampilkan instruksi
+                    const instruction = document.createElement('div');
+                    instruction.className = 'info-box';
+                    instruction.innerHTML = `
+                        <div class="menu-title">CARA MENAMBAH LINK:</div>
+                        <div class="menu-item">
+                            1. Buka file HTML di text editor<br>
+                            2. Cari fungsi showMainMenu()<br>
+                            3. Ganti href="#" dengan link yang valid<br>
+                            4. Contoh: <code>href="https://example.com/wishlist.html"</code><br>
+                            5. Simpan dan refresh halaman
+                        </div>
+                    `;
+                    content.appendChild(instruction);
+                }
+            }
+            
+            // ===== ACCOUNT INFO =====
+            function showAccountInfo() {
+                if (!currentUser) {
+                    showMainMenu();
+                    return;
+                }
+                
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', `┌─[${currentUser.username}@inco]─[/account]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const title = createLine('output', 'ACCOUNT INFORMATION', 'cyan');
+                content.appendChild(title);
+                title.style.opacity = '1';
+                
+                const formContainer = document.createElement('div');
+                formContainer.className = 'menu-container';
+                formContainer.innerHTML = `
+                    <div class="info-box">
+                        <div class="menu-title">YOUR PROFILE</div>
+                        <div class="menu-item">
+                            <strong>Furry Name:</strong> ${currentUser.username}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Fursona Type:</strong> ${currentUser.fursona}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Favorite Color:</strong> ${currentUser.color}
+                        </div>
+                        <div class="menu-item">
+                            <strong>User ID:</strong> ${currentUser.id}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Registration Date:</strong> ${new Date(currentUser.registrationDate).toLocaleDateString()}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Last Login:</strong> ${currentUser.lastLogin ? new Date(currentUser.lastLogin).toLocaleString() : 'First login'}
+                        </div>
+                        <div class="menu-item">
+                            <strong>Total Logins:</strong> ${currentUser.loginCount || 1}
+                        </div>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                    </div>
+                    <div class="menu-item">
+                        <button class="form-button" onclick="changeAccessCode()">Change Access Code</button>
+                        <span class="menu-hint">- Update your security code</span>
+                    </div>
+                `;
+                content.appendChild(formContainer);
+            }
+            
+            // ===== CHANGE ACCESS CODE =====
+            function changeAccessCode() {
+                content.innerHTML += `
+                    <div class="info-box">
+                        <div class="menu-title">CHANGE ACCESS CODE</div>
+                        <div class="form-line">
+                            <span class="form-label">Current Code:</span>
+                            <input type="password" id="currentCode" class="form-input">
+                        </div>
+                        <div class="form-line">
+                            <span class="form-label">New Code:</span>
+                            <input type="password" id="newCode" class="form-input">
+                        </div>
+                        <div class="form-line">
+                            <span class="form-label">Confirm New:</span>
+                            <input type="password" id="confirmNewCode" class="form-input">
+                        </div>
+                        <div class="form-line">
+                            <button class="form-button" onclick="processAccessCodeChange()">Update Code</button>
+                            <button class="form-button" onclick="showAccountInfo()">Cancel</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function processAccessCodeChange() {
+                const currentCode = document.getElementById('currentCode').value;
+                const newCode = document.getElementById('newCode').value;
+                const confirmNewCode = document.getElementById('confirmNewCode').value;
+                
+                if (currentCode !== currentUser.accessCode) {
+                    alert('Current access code is incorrect!');
+                    return;
+                }
+                
+                if (newCode !== confirmNewCode) {
+                    alert('New codes do not match!');
+                    return;
+                }
+                
+                if (newCode.length < 4) {
+                    alert('New code must be at least 4 characters!');
+                    return;
+                }
+                
+                // Update in database
+                const users = JSON.parse(localStorage.getItem('exfurincoUsers'));
+                const userIndex = users.findIndex(u => u.id === currentUser.id);
+                
+                if (userIndex !== -1) {
+                    users[userIndex].accessCode = newCode;
+                    localStorage.setItem('exfurincoUsers', JSON.stringify(users));
+                    
+                    // Update current user in session
+                    currentUser.accessCode = newCode;
+                    sessionStorage.setItem('exfurincoCurrentUser', JSON.stringify(currentUser));
+                    
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'success-msg';
+                    successMsg.innerHTML = 'Access code updated successfully!';
+                    content.appendChild(successMsg);
+                    
+                    setTimeout(() => {
+                        showAccountInfo();
+                    }, 1500);
+                }
+            }
+            
+            // ===== LINK HANDLER (untuk file lokal) =====
+            function handleLinkClick(linkElement) {
+                const href = linkElement.getAttribute('href');
+                
+                // Jika href kosong atau hanya '#', jangan lakukan apa-apa
+                if (!href || href === '#') {
+                    return false;
+                }
+                
+                // Jika href adalah file HTML yang ada di server
+                if (href.endsWith('.html') && !href.includes('http')) {
+                    // Coba untuk fetch file HTML
+                    fetch(href)
+                        .then(response => {
+                            if (response.ok) {
+                                // File ada, buka seperti biasa
+                                return true;
+                            } else {
+                                // File tidak ada, tampilkan error di terminal
+                                showFileNotFoundError(href);
+                                return false;
+                            }
+                        })
+                        .catch(error => {
+                            // Error dalam fetch, tampilkan error di terminal
+                            showFileNotFoundError(href);
+                            return false;
+                        });
+                    
+                    // Return false untuk mencegah default behavior
+                    return false;
+                }
+                
+                // Untuk link internal dengan onclick handler, biarkan onclick yang menangani
+                return true;
+            }
+            
+            // ===== SHOW FILE NOT FOUND ERROR =====
+            function showFileNotFoundError(filename) {
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', `┌─[${currentUser ? currentUser.username : 'guest'}@inco]─[/error]`);
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const errorLine = createLine('output', `ERROR: File not found`, 'error');
+                content.appendChild(errorLine);
+                errorLine.style.opacity = '1';
+                
+                const detailLine = createLine('output', `File '${filename}' tidak ditemukan di server.`, 'dim');
+                content.appendChild(detailLine);
+                detailLine.style.opacity = '1';
+                
+                const messageLine = createLine('output', `No have package here. File tidak tersedia.`, 'error');
+                content.appendChild(messageLine);
+                messageLine.style.opacity = '1';
+                
+                // Tampilkan menu kembali
+                const menuContainer = document.createElement('div');
+                menuContainer.className = 'menu-container';
+                menuContainer.innerHTML = `
+                    <div class="error-msg">
+                        <strong>FILE ACCESS ERROR</strong><br>
+                        File yang diminta tidak tersedia di sistem.<br>
+                        Hubungi administrator untuk membuat file: ${filename}
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" onclick="showMainMenu()">← Kembali ke Menu Utama</a>
+                    </div>
+                `;
+                content.appendChild(menuContainer);
+            }
+            
+            // ===== PROCESS REGISTRATION =====
+            function processRegistration() {
+                const furryName = document.getElementById('furryName').value.trim();
+                const fursonaType = document.getElementById('fursonaType').value.trim();
+                const favColor = document.getElementById('favColor').value.trim();
+                const accessCode = document.getElementById('accessCode').value;
+                const confirmCode = document.getElementById('confirmCode').value;
+                
+                // Validasi
+                if (!furryName || !fursonaType || !favColor || !accessCode || !confirmCode) {
+                    alert('Please fill all fields!');
+                    return;
+                }
+                
+                if (accessCode !== confirmCode) {
+                    alert('Access codes do not match!');
+                    return;
+                }
+                
+                if (Database.userExists(furryName)) {
+                    alert('Username already exists! Please choose another name.');
+                    return;
+                }
+                
+                // Register user
+                const userData = {
+                    username: furryName,
+                    fursona: fursonaType,
+                    color: favColor,
+                    accessCode: accessCode
+                };
+                
+                const newUser = Database.registerUser(userData);
+                
+                // Auto-login setelah registrasi
+                currentUser = newUser;
+                isLoggedIn = true;
+                sessionStorage.setItem('exfurincoLoggedIn', 'true');
+                sessionStorage.setItem('exfurincoCurrentUser', JSON.stringify(newUser));
+                
+                // Show success
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/registration]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const successLine = createLine('output', 'Registration successful! Welcome to EXFURINCO!', 'success');
+                content.appendChild(successLine);
+                successLine.style.opacity = '1';
+                
+                const userLine = createLine('output', `User ID: ${newUser.id} | Fursona: ${newUser.fursona}`, 'dim');
+                content.appendChild(userLine);
+                userLine.style.opacity = '1';
+                
+                setTimeout(() => {
+                    showMainMenu();
+                }, 2000);
+            }
+            
+            // ===== PROCESS LOGIN =====
+            function processLogin() {
+                const loginName = document.getElementById('loginName').value.trim();
+                const loginCode = document.getElementById('loginCode').value;
+                
+                if (!loginName || !loginCode) {
+                    alert('Please enter both username and access code!');
+                    return;
+                }
+                
+                const authenticatedUser = Database.authenticateUser(loginName, loginCode);
+                
+                if (authenticatedUser) {
+                    // Login successful
+                    currentUser = authenticatedUser;
+                    isLoggedIn = true;
+                    sessionStorage.setItem('exfurincoLoggedIn', 'true');
+                    sessionStorage.setItem('exfurincoCurrentUser', JSON.stringify(authenticatedUser));
+                    
+                    // Show success
+                    content.innerHTML = '';
+                    lineIndex = 0;
+                    
+                    const pathLine = createLine('path', '┌─[exfur@inco]─[/login]');
+                    content.appendChild(pathLine);
+                    pathLine.style.opacity = '1';
+                    
+                    const successLine = createLine('output', `Login successful! Welcome back, ${authenticatedUser.username}!`, 'success');
+                    content.appendChild(successLine);
+                    successLine.style.opacity = '1';
+                    
+                    const infoLine = createLine('output', `Login count: ${authenticatedUser.loginCount}`, 'dim');
+                    content.appendChild(infoLine);
+                    infoLine.style.opacity = '1';
+                    
+                    setTimeout(() => {
+                        showMainMenu();
+                    }, 1500);
+                } else {
+                    alert('Invalid username or access code!');
+                }
+            }
+            
+            // ===== LOGOUT =====
+            function logout() {
+                // Clear session
+                sessionStorage.removeItem('exfurincoLoggedIn');
+                sessionStorage.removeItem('exfurincoCurrentUser');
+                
+                isLoggedIn = false;
+                currentUser = null;
+                
+                // Show logout message
+                content.innerHTML = '';
+                lineIndex = 0;
+                
+                const pathLine = createLine('path', '┌─[exfur@inco]─[/logout]');
+                content.appendChild(pathLine);
+                pathLine.style.opacity = '1';
+                
+                const logoutLine = createLine('output', 'Logging out... Session cleared.', 'dim');
+                content.appendChild(logoutLine);
+                logoutLine.style.opacity = '1';
+                
+                setTimeout(() => {
+                    bootSequence();
+                }, 1500);
+            }
+            
+            // ===== WINDOW CONTROLS =====
+            function minimizeWindow() {
+                const btn = document.querySelector('.win-btn');
+                if (btn) btn.classList.add('glitch');
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('glitch');
+                }, 300);
+                alert('Minimize function - in a real app this would minimize the window');
+            }
+            
+            function maximizeWindow() {
+                const btns = document.querySelectorAll('.win-btn');
+                if (btns[1]) btns[1].classList.add('glitch');
+                setTimeout(() => {
+                    if (btns[1]) btns[1].classList.remove('glitch');
+                }, 300);
+                
+                const terminalWindow = document.getElementById('terminal-window');
+                if (terminalWindow) {
+                    if (terminalWindow.style.top === '0px') {
+                        terminalWindow.style.top = '20px';
+                        terminalWindow.style.left = '20px';
+                        terminalWindow.style.right = '20px';
+                        terminalWindow.style.bottom = '20px';
+                    } else {
+                        terminalWindow.style.top = '0px';
+                        terminalWindow.style.left = '0px';
+                        terminalWindow.style.right = '0px';
+                        terminalWindow.style.bottom = '0px';
+                    }
+                }
+            }
+            
+            function closeWindow() {
+                const btn = document.querySelector('.close-btn');
+                if (btn) btn.classList.add('glitch');
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('glitch');
+                }, 300);
+                
+                if (confirm('Close EXFURINCO Terminal?')) {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        document.body.innerHTML = '<div style="padding: 20px; color: #8a2be2; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">EXFURINCO TERMINAL CLOSED<br><br>Connection terminated.<br>All data secured.</div>';
+                    }, 500);
+                }
+            }
+            
+            // ===== HELPER FUNCTIONS =====
+            async function showLine(type, text, cls = '') {
+                try {
+                    const line = createLine(type, text, cls);
+                    content.appendChild(line);
+                    
+                    // Scroll to bottom
+                    content.scrollTop = content.scrollHeight;
+                    
+                    if (type === 'command' || type === 'output' || type === 'system') {
+                        await typeLine(line, text);
+                    } else if (type === 'path') {
+                        await wait(config.lineDelay);
+                        line.style.opacity = '1';
+                    }
+                    
+                    return line;
+                } catch (error) {
+                    console.error('Error in showLine:', error);
+                    return null;
+                }
+            }
+            
+            async function showProgress(duration) {
+                try {
+                    const line = createLine('output', '');
+                    line.innerHTML = '<span class="output"><span class="progress-container"><span class="progress-bar"></span></span></span>';
+                    content.appendChild(line);
+                    
+                    await wait(10);
+                    
+                    const bar = line.querySelector('.progress-bar');
+                    if (bar) {
+                        bar.style.transition = `width ${duration}ms linear`;
+                        bar.style.width = '100%';
+                    }
+                    
+                    await wait(duration);
+                    line.style.opacity = '1';
+                } catch (error) {
+                    console.error('Error in showProgress:', error);
+                }
+            }
+            
+            function wait(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            // ===== INITIALIZE =====
+            function init() {
+                try {
+                    // Initialize database
+                    Database.init();
+                    setupCanvas();
+                    
+                    // Check login status
+                    if (isLoggedIn && currentUser) {
+                        // User sudah login, langsung ke main menu
+                        setTimeout(() => showMainMenu(), 100);
+                    } else {
+                        // Start boot sequence
+                        setTimeout(bootSequence, 800);
+                    }
+                    
+                    // Handle resize
+                    window.addEventListener('resize', () => {
+                        if (canvas) {
+                            canvas.width = window.innerWidth;
+                            canvas.height = window.innerHeight;
+                        }
+                    });
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    // Fallback langsung ke main menu jika ada error
+                    setTimeout(() => {
+                        content.innerHTML = '<div style="color: #ff3333; padding: 20px;">System initialization failed. Loading main menu...</div>';
+                        setTimeout(showMainMenu, 1000);
+                    }, 100);
+                }
+            }
+            
+            // Expose functions to global scope
+            window.minimizeWindow = minimizeWindow;
+            window.maximizeWindow = maximizeWindow;
+            window.closeWindow = closeWindow;
+            window.processRegistration = processRegistration;
+            window.processLogin = processLogin;
+            window.showMainMenu = showMainMenu;
+            window.logout = logout;
+            window.bootSequence = bootSequence;
+            window.handleLinkClick = handleLinkClick;
+            window.handleExternalLink = handleExternalLink;
+            window.showResetOptions = showResetOptions;
+            window.showDatabaseInfo = showDatabaseInfo;
+            window.clearDatabase = clearDatabase;
+            window.showAccountInfo = showAccountInfo;
+            window.changeAccessCode = changeAccessCode;
+            window.processAccessCodeChange = processAccessCodeChange;
+            window.showTemplatePage = showTemplatePage;
+            window.testTemplateLink = testTemplateLink;
+            
+            // Start when ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+            
+        })();
+    </script>
+</body>
+</html>
