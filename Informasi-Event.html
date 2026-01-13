@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXFURINCO Event Hub - Anime & Furry Events</title>
+    <style>
+        /* RESET & BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* SCANLINES EFFECT */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 20, 0, 0.1) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.3;
+        }
+        
+        /* CRT CURVATURE */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.9);
+            border-radius: 0.2%;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .page {
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ANIMATIONS */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        .glitch-effect {
+            animation: glitch 0.3s infinite;
+        }
+        
+        /* ===== BOOT ANIMATION PAGE ===== */
+        #bootPage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #000;
+        }
+        
+        .boot-animation {
+            width: 100%;
+            max-width: 800px;
+            border: 1px solid #00aa00;
+            padding: 30px;
+            background-color: rgba(0, 10, 0, 0.9);
+        }
+        
+        .boot-line {
+            margin-bottom: 15px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        .boot-line:nth-child(1) { animation-delay: 0.5s; }
+        .boot-line:nth-child(2) { animation-delay: 1s; }
+        .boot-line:nth-child(3) { animation-delay: 1.5s; }
+        .boot-line:nth-child(4) { animation-delay: 2s; }
+        .boot-line:nth-child(5) { animation-delay: 2.5s; }
+        .boot-line:nth-child(6) { animation-delay: 3s; }
+        .boot-line:nth-child(7) { animation-delay: 3.5s; }
+        .boot-line:nth-child(8) { animation-delay: 4s; }
+        
+        /* ===== MAIN MENU PAGE ===== */
+        #mainPage {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .title-container {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #00ff00;
+            background-color: rgba(0, 20, 0, 0.3);
+        }
+        
+        .title-border {
+            color: #00aa00;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+        
+        .main-title {
+            color: #00ff00;
+            font-size: 2.5em;
+            margin: 15px 0;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .title-sub {
+            color: #00cc00;
+            font-size: 1.1em;
+        }
+        
+        .menu-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .menu-option {
+            border: 1px solid #00aa00;
+            padding: 25px;
+            background-color: rgba(0, 15, 0, 0.4);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .menu-option:hover {
+            border-color: #00ff00;
+            background-color: rgba(0, 25, 0, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.2);
+        }
+        
+        .option-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #00aa00;
+            padding-bottom: 10px;
+        }
+        
+        .option-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+        
+        .option-header h2 {
+            color: #ffff00;
+            font-size: 1.5em;
+        }
+        
+        .option-desc {
+            color: #cccccc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        
+        .option-command {
+            color: #00ff00;
+            text-align: right;
+            font-size: 0.9em;
+            border-top: 1px dashed #00aa00;
+            padding-top: 10px;
+        }
+        
+        .main-footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #00aa00;
+        }
+        
+        .footer-warning {
+            color: #ff5555;
+            margin-bottom: 10px;
+        }
+        
+        .credit {
+            color: #00cc00;
+            font-size: 1.1em;
+        }
+        
+        /* ===== NAVIGATION BAR ===== */
+        .nav-bar {
+            border-bottom: 1px solid #00aa00;
+            padding: 15px 20px;
+            background-color: rgba(0, 10, 0, 0.8);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: #00cc00;
+            text-decoration: none;
+            padding: 8px 15px;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            border-color: #00ff00;
+            background-color: rgba(0, 20, 0, 0.3);
+        }
+        
+        .nav-icon {
+            margin-right: 8px;
+        }
+        
+        .nav-status {
+            color: #00ff00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #00ff00;
+            border-radius: 50%;
+        }
+        
+        .nav-divider {
+            color: #00aa00;
+        }
+        
+        /* ===== EVENT PAGES COMMON STYLES ===== */
+        .terminal-box {
+            border: 1px solid #00aa00;
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: rgba(0, 15, 0, 0.4);
+            position: relative;
+        }
+        
+        .terminal-box::before {
+            content: "TERMINAL";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background-color: #0a0a0a;
+            padding: 0 10px;
+            color: #00ff00;
+            font-size: 0.8em;
+        }
+        
+        .terminal-line {
+            margin-bottom: 8px;
+            color: #00cc00;
+        }
+        
+        .terminal-line::before {
+            content: "> ";
+            color: #00ff00;
+        }
+        
+        .month-section {
+            border: 1px solid #00aa00;
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: rgba(0, 20, 0, 0.2);
+        }
+        
+        .month-header {
+            border-bottom: 1px solid #00aa00;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .month-header h2 {
+            color: #ffff00;
+            font-size: 1.8em;
+        }
+        
+        .month-stats {
+            color: #00cc00;
+            font-size: 0.9em;
+        }
+        
+        .month-content {
+            white-space: pre-line;
+            line-height: 1.8;
+            color: #cccccc;
+            font-size: 1em;
+        }
+        
+        /* ===== ANIME EVENT PAGE SPECIFIC ===== */
+        #animePage .month-content {
+            color: #aaddff;
+        }
+        
+        /* ===== FURRY EVENT PAGE SPECIFIC ===== */
+        #furryPage .month-content {
+            color: #ffcc88;
+        }
+        
+        .search-animation {
+            border: 1px solid #00aa00;
+            padding: 30px;
+            background-color: rgba(0, 10, 0, 0.9);
+            margin-bottom: 40px;
+        }
+        
+        .search-line {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .menu-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-container {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .main-title {
+                font-size: 1.8em;
+            }
+            
+            .month-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== BOOT ANIMATION PAGE ===== -->
+    <div id="bootPage" class="page">
+        <div class="boot-animation">
+            <div class="boot-line">> SYSTEM BOOTING...</div>
+            <div class="boot-line">> INITIALIZING EXFURINCO EVENT HUB v2.6</div>
+            <div class="boot-line">> LOADING DATABASE MODULES...</div>
+            <div class="boot-line">> COSPLAY EVENT DATABASE: <span class="blink">ONLINE</span></div>
+            <div class="boot-line">> FURRY EVENT DATABASE: <span class="blink">ONLINE</span></div>
+            <div class="boot-line">> ENCRYPTION: AES-256 ACTIVE</div>
+            <div class="boot-line">> CONNECTING TO EVENT NETWORK...</div>
+            <div class="boot-line">> WELCOME TO THE HUB</div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN MENU PAGE ===== -->
+    <div id="mainPage" class="page hidden">
+        <div class="title-container">
+            <div class="title-border">/==============================================\</div>
+            <h1 class="main-title">EXFURINCO EVENT HUB</h1>
+            <div class="title-sub">Access Point for Underground Gatherings</div>
+            <div class="title-border">\==============================================/</div>
+        </div>
+
+        <div class="menu-options">
+            <a href="#" class="menu-option" onclick="showPage('animePage')">
+                <div class="option-header">
+                    <span class="option-icon">🎭</span>
+                    <h2>ANIME/COSPLAY EVENTS</h2>
+                </div>
+                <div class="option-desc">
+                    > Access Japanese culture event database<br>
+                    > Location: Jabodetabek<br>
+                    > Source: Angkringan Event ID<br>
+                    > Last update: 2026-01-12
+                </div>
+                <div class="option-command">[CLICK TO ACCESS]</div>
+            </a>
+
+            <a href="#" class="menu-option" onclick="showPage('furryPage')">
+                <div class="option-header">
+                    <span class="option-icon">🐾</span>
+                    <h2>FURRY EVENTS</h2>
+                </div>
+                <div class="option-desc">
+                    > Access anthropomorphic community database<br>
+                    > Location: Indonesia<br>
+                    > Source: Social Media Scan<br>
+                    > Requires verification
+                </div>
+                <div class="option-command">[CLICK TO ACCESS]</div>
+            </a>
+
+            <div class="menu-option">
+                <div class="option-header">
+                    <span class="option-icon">ℹ️</span>
+                    <h2>SYSTEM INFO</h2>
+                </div>
+                <div class="option-desc">
+                    > Total events: 47+<br>
+                    > Last sync: 2026-01-12 14:30<br>
+                    > Encryption: Active<br>
+                    > Access level: Public
+                </div>
+                <div class="option-command">[SYSTEM STATUS: ONLINE]</div>
+            </div>
+        </div>
+
+        <div class="main-footer">
+            <div class="footer-warning">
+                <span class="blink">⚠️</span> WARNING: Unauthorized access will be logged
+            </div>
+            <div class="credit">
+                 EXUFURINCO X Event Hub System
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ANIME EVENT PAGE ===== -->
+    <div id="animePage" class="page hidden">
+        <div class="nav-bar">
+            <div class="nav-container">
+                <a href="#" class="nav-link" onclick="showPage('mainPage')">
+                    <span class="nav-icon">⌂</span> MAIN HUB
+                </a>
+                <div class="nav-divider">|</div>
+                <a href="#" class="nav-link" onclick="showPage('animePage')">
+                    <span class="nav-icon">🎭</span> COSPLAY
+                </a>
+                <div class="nav-divider">|</div>
+                <a href="#" class="nav-link" onclick="showPage('furryPage')">
+                    <span class="nav-icon">🐾</span> FURRY
+                </a>
+                <div class="nav-divider">|</div>
+                <div class="nav-status">
+                    <span class="status-dot blink"></span>
+                    ONLINE
+                </div>
+            </div>
+        </div>
+
+        <div class="title-container">
+            <div class="title-border">/==============================================\</div>
+            <h1 class="main-title">EVENT COSPLAY</h1>
+            <div class="title-sub">_*`New Update Event Jejepangan /Cosplay di Jabodetabek Januari to Desember 2026!`*_</div>
+            <div class="title-sub">𝐈𝐧𝐟𝐨 𝐄𝐯𝐞𝐧𝐭 𝐉𝐞𝐣𝐞𝐩𝐚𝐧𝐠𝐚𝐧 𝐉𝐚𝐛𝐨𝐝𝐞𝐭𝐚𝐛𝐞𝐤 𝐁𝐲 𝐀𝐧𝐠𝐤𝐫𝐢𝐧𝐠𝐚𝐧 𝐄𝐯𝐞𝐧𝐭 (2026)</div>
+        </div>
+
+        <div class="terminal-box">
+            <div class="terminal-line">connect to event_database --year=2026 --type=cosplay --location=jabodetabek</div>
+            <div class="terminal-line">status: connected successfully</div>
+            <div class="terminal-line">source verified: Angkringan Event ID</div>
+            <div class="terminal-line">encryption: active (AES-256)</div>
+            <div class="terminal-line">warning: dilarang menghapus/mengubah source postingan ini</div>
+        </div>
+
+        <!-- JANUARI -->
+        <div class="month-section">
+            <div class="month-header">
+                <h2>`Januari`</h2>
+                <div class="month-stats">11 Events | Status: Active</div>
+            </div>
+            <div class="month-content">
+*Cosplay Land*
+🗓️: 11 Januari 2026
+📍: Lotte Bintaro, Tangsel
+Info: @rafcreative
+
+*AnimeToku 2026*
+🗓️: 16-25 Januari 2026
+📍: Main GF, Mall Of Indonesia
+Info: @saccaproduction
+
+*Revo Japan Festival 2026*
+🗓️: 17-18 Januari 2026
+📍: Revo Mall Bekasi
+Info: https://www.instagram.com/p/DSCwJw-Eu7q/?igsh=NGNtZzhzNTF0dTBu
+
+*Ichiban Sushi Matsuri 2026*
+🗓️ : 23 - 25 Januari 2026
+📍 : Pakuwon mall bekasi
+Info : https://www.instagram.com/p/DTKDm4wE3aB/?igsh=MTlxZmEyYWsxaTV0cA==
+
+*Tangcity Community Fun Show*
+🗓️: 24 Januari 2026
+📍: Tangcity Mall
+Info: https://www.instagram.com/p/DTUM5NGEv6_/?igsh=aXpqNmhscDVqNHQ2
+
+*Penabur Esport Tournament (PESTA) 2026!*
+🗓️: Sabtu, 24 Januari 2026 16.00 WIB
+📍: Lippo Mall Nusantara, Jakarta Selatan
+Info: https://www.instagram.com/pestaofficial.id/
+
+*Japan Rock Idol Festival*
+🗓️: 24-25 Januari 2026
+📍: Gajah Mada Plaza
+Info: @rafcreative
+
+*Dust X Frieren - Wearable Magic*
+🗓️: 25 Januari 2026
+📍: Living World Kota Wisata
+Info: @rafcreative
+
+*The Jakarta 21st Toys And Comics Fair 2026*
+📅: 31 Januari 2026
+📍: Kartika Expo Center, Balai Kartini - Jl. Gatot Subroto Kav. 37, Jakarta Selatan
+⏰️: 10.00 - 21.00 WIB 
+Info: https://www.instagram.com/jakartatoysfair?igsh=MW52OXZieGlrcW81aQ==
+
+*Ciplaz Depok Cosfest Vol.2*
+🗓️: 31 Januari 2026
+📍: Ciplaz Depok
+Info: https://www.instagram.com/cosplayjabodetabek?igsh=aXFpbzc2YWVna241
+            </div>
+        </div>
+
+        <!-- FEBRUARI -->
+        <div class="month-section">
+            <div class="month-header">
+                <h2>`Februari`</h2>
+                <div class="month-stats">6 Events | Status: Active</div>
+            </div>
+            <div class="month-content">
+*The Jakarta 21st Toys And Comics Fair 2026*
+📅: 1 Februari 2026 
+📍: Kartika Expo Center, Balai Kartini - Jl. Gatot Subroto Kav. 37, Jakarta Selatan
+⏰️: 10.00 - 21.00 WIB 
+Info: https://www.instagram.com/jakartatoysfair?igsh=MW52OXZieGlrcW81aQ==
+
+*Aniwave*
+🗓️: 1 Februari 2026
+📍: Cityplaza Jatinegara
+Info: @cosplayjabodetabek
+
+*Cosplay Competition*
+🗓️: 7 Februari 2026
+📍: Penabur Secondary Kelapa Gading
+Info: https://www.instagram.com/thepremierebypskg?igsh=MXh3dDE1OHdkb29zdg==
+🎟️: Ada HTM
+
+*Aniplay Fest*
+🗓️: 7-8 Februari 2026
+📍: Foodnation, Bekasi Cyber Park
+Info: https://www.instagram.com/p/DTAE-1HCTHQ/?igsh=MXRsM280azRhczZtOA==
+
+*BTM Gakure*
+🗓️: 7-8 Februari 2026
+📍: Lantai 3, Bogor Trade Mall
+Info: https://www.instagram.com/p/DTARuTsjwa2/?igsh=eGN3ZDV0cjIycDU0
+
+*Stereo Fest*
+🗓️: 14-15 Februari 2026
+📍: Stadion A-B, Lapangan Banteng, Jakarta Pusat
+Info: https://www.instagram.com/p/DRuGvQdktaS/?igsh=ZGlrbjB5bWR6NzI0
+            </div>
+        </div>
+
+        <!-- MARET -->
+        <div class="month-section">
+            <div class="month-header">
+                <h2>`Maret`</h2>
+                <div class="month-stats">1 Event | Status: Active</div>
+            </div>
+            <div class="month-content">
+*Road To Anipop Fest 2026*
+🗓️: 29 Maret 2026
+📍: Food Nation, Bekasi Cyber Park
+Info: https://www.instagram.com/p/DSSc259AfwV/?igsh=MWVnNWpiYWF5NGl3dQ==
+            </div>
+        </div>
+
+        <!-- APRIL -->
+        <div class="month-section">
+            <div class="month-header">
+                <h2>`April`</h2>
+                <div class="month-stats">0 Events | Status: Pending</div>
+            </div>
+            <div class="month-content">
+Error 404 File Event Not Found 
+            </div>
+        </div>
+
+        <!-- MEI -->
+        <div class="month-section">
+            <div class="month-header">
+                <h2>`Mei`</h2>
+                <div class="month-stats">2 Events | Status: Active</div>
+            </div>
+            <div class="month-content">
+*Comic Frontier 22*
+🗓️: 16-17 Mei 2026
+📍: ICE BSD
+Info: https://www.instagram.com/p/DRHP82KCe3Y/?igsh=OXYyY2N3dWR1eTky
+
+*Djakarta Ennichi*
+🗓️: 23-24 Mei 2025
+📍: Lapangan Banteng
+Info: https://www.instagram.com/djakartaennichi?igsh=MWVsMm92dTIydGZwZw==
+            </div>
+        </div>
+
+        <!-- WARNING -->
+        <div class="terminal-box" style="border-color: #ff5555;">
+            <div class="terminal-line" style="color: #ff5555;">`Larangan Keras!`</div>
+            <div class="terminal-line">> Dilarang mengubah, merubah, atau mengedit isi postingan.</div>
+            <div class="terminal-line">> Dilarang meng-upload ulang (re-upload) konten ke tempat lain.</div>
+            <div class="terminal-line">> Jika ingin membagikan, silakan gunakan fitur share langsung dari saluran.</div>
+            <div class="terminal-line">> Dilarang menambahkan atau mengurangi informasi tanpa seizin admin Angkringan Event ID.</div>
+            <div class="terminal-line" style="color: #ff5555;">> Apabila melanggar dan ketahuan mengubah, memodifikasi atau mengklaim list event, maka akan kami blacklist dari saluran maupun komunitas!</div>
+        </div>
+
+        <div class="main-footer">
+            <div class="credit">
+                EXUFURINCO X Angkringan Event ID
+            </div>
+            <div class="title-sub" style="margin-top: 10px;">
+                `©️ Angkringan Event ID`
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FURRY EVENT PAGE ===== -->
+    <div id="furryPage" class="page hidden">
+        <div class="nav-bar">
+            <div class="nav-container">
+                <a href="#" class="nav-link" onclick="showPage('mainPage')">
+                    <span class="nav-icon">⌂</span> MAIN HUB
+                </a>
+                <div class="nav-divider">|</div>
+                <a href="#" class="nav-link" onclick="showPage('animePage')">
+                    <span class="nav-icon">🎭</span> COSPLAY
+                </a>
+                <div class="nav-divider">|</div>
+                <a href="#" class="nav-link" onclick="showPage('furryPage')">
+                    <span class="nav-icon">🐾</span> FURRY
+                </a>
+                <div class="nav-divider">|</div>
+                <div class="nav-status">
+                    <span class="status-dot blink"></span>
+                    ONLINE
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH ANIMATION -->
+        <div id="furrySearch" class="search-animation">
+            <div class="search-line">> initializing furry event scanner...</div>
+            <div class="search-line">> connecting to social media APIs...</div>
+            <div class="search-line">> scanning: instagram.com/tags/furryindo...</div>
+            <div class="search-line">> scanning: twitter.com/hashtags/furmeet...</div>
+            <div class="search-line">> scanning: facebook.com/groups/indofurry...</div>
+            <div class="search-line">> scanning: telegram.me/furryindonesia...</div>
+            <div class="search-line">> data extraction in progress...</div>
+            <div class="search-line">> found [4 Events File] potential furry events...</div>
+            <div class="search-line">> verifying event information...</div>
+            <div class="search-line">> compiling results...</div>
+            <div class="search-line blink">> access granted. loading event database...</div>
+        </div>
+
+        <!-- MAIN CONTENT (hidden saat animasi) -->
+        <div id="furryContent" class="hidden">
+            <div class="title-container">
+                <div class="title-border">/==============================================\</div>
+                <h1 class="main-title">\Event Furry Indonesia/</h1>
+                <div class="title-sub">Digital Den of Anthropomorphic Gatherings</div>
+                <div class="title-border">\==============================================/</div>
+            </div>
+
+            <div class="terminal-box">
+                <div class="terminal-line">connect to furry_database --location=indonesia --source=social_media</div>
+                <div class="terminal-line">status: scanning in progress</div>
+                <div class="terminal-line">source: media sosial [instagram/twitter/telegram]</div>
+                <div class="terminal-line">last updated: [2026-01-13]</div>
+                <div class="terminal-line">total events scanned: [3]</div>
+            </div>
+
+            <!-- 12 BULAN DENGAN TEMPLATE -->
+            <!-- JANUARI -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[JANUARI 2026]</h2>
+                    <div class="month-stats">Events: [1] | Status: [Expired]</div>
+                </div>
+                <div class="month-content"> 𝗖𝗔𝗙𝗔 𝗪𝗜𝗡𝗧𝗘𝗥 𝗦𝗣𝗘𝗦𝗜𝗔𝗟
+🗓 10 Januari 2026
+📍 SQP HUB - Summarecon Serpong
+🔗 https://www.instagram.com/p/DQvlemakt_w/?igsh=YWx1aDhrNnV1bDVw
+
+                </div>
+            </div>
+
+            <!-- FEBRUARI -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[FEBRUARI 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- MARET -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[MARET 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content"> 
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- APRIL -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[APRIL 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- MEI -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[MEI 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- JUNI -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[JUNI 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- JULI -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[JULI 2026]</h2>
+                    <div class="month-stats">Events: [1] | Status: [Verified]</div>
+                </div>
+                <div class="month-content">
+𝗜𝗪𝗔𝗚 𝟮𝟬𝟮𝟲 : 𝗘𝗟𝗘𝗖𝗧𝗥𝗜𝗖 𝗗𝗥𝗘𝗔𝗠
+🗓 04-05 Juli 2026
+📍 Ibis Style Serpong BSD City
+🔗 https://www.instagram.com/p/DO0z7emk_LY/?igsh=MWJsMDY3bTY1enZyOA==
+                </div>
+            </div>
+
+            <!-- AGUSTUS -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[AGUSTUS 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- SEPTEMBER -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[SEPTEMBER 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- OKTOBER -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[OKTOBER 2026]</h2>
+                    <div class="month-stats">Events: [1] | Status: [Verified]</div>
+                </div>
+                <div class="month-content">
+𝗣𝗔𝗪𝗔𝗜 𝟮𝟬𝟮𝟲 : 𝗚𝗢𝗗'𝗦 𝗣𝗔𝗥𝗔𝗗𝗜𝗦𝗘
+🗓 03-04 Oktober 2026
+📍 Grand Istana Rama Hotel Kuta
+🔗 https://www.instagram.com/reel/DKmAoziTGaV/?igsh=MXV5dTg5dHVvZHQweQ==
+                </div>
+            </div>
+
+            <!-- NOVEMBER -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[NOVEMBER 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <!-- DESEMBER -->
+            <div class="month-section">
+                <div class="month-header">
+                    <h2>[DESEMBER 2026]</h2>
+                    <div class="month-stats">Events: [Error 404 Not Found] | Status: [Error 404 Not Found]</div>
+                </div>
+                <div class="month-content">
+[Error 404 File Event Not Found]
+                </div>
+            </div>
+
+            <div class="main-footer">
+                <div class="credit">
+                     EXUFURINCO X FURRY INDONESIA
+                </div>
+                <div class="title-sub" style="margin-top: 10px;">
+                    Event information sourced from social media. Verify before attending.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL PAGE MANAGEMENT =====
+        let currentPage = 'bootPage';
+        
+        function showPage(pageId) {
+            // Hide current page
+            document.getElementById(currentPage).classList.add('hidden');
+            
+            // Show new page
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            // Special handling for Furry page
+            if (pageId === 'furryPage') {
+                startFurryAnimation();
+            }
+            
+            // Special handling for Boot page
+            if (pageId === 'bootPage') {
+                setTimeout(() => {
+                    showPage('mainPage');
+                }, 5000);
+            }
+            
+            currentPage = pageId;
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+        
+        // ===== FURRY PAGE ANIMATION =====
+        function startFurryAnimation() {
+            const searchAnim = document.getElementById('furrySearch');
+            const furryContent = document.getElementById('furryContent');
+            
+            // Show animation
+            searchAnim.classList.remove('hidden');
+            furryContent.classList.add('hidden');
+            
+            // Animate each line
+            const lines = searchAnim.querySelectorAll('.search-line');
+            lines.forEach((line, index) => {
+                line.style.animationDelay = `${index * 0.5}s`;
+            });
+            
+            // After animation, show content
+            setTimeout(() => {
+                searchAnim.classList.add('hidden');
+                furryContent.classList.remove('hidden');
+                furryContent.style.animation = 'fadeIn 1s forwards';
+            }, lines.length * 500 + 1000);
+        }
+        
+        // ===== RANDOM GLITCH EFFECT =====
+        function randomGlitch() {
+            const titles = document.querySelectorAll('.main-title, .month-header h2');
+            if (Math.random() > 0.7) {
+                const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+                randomTitle.classList.add('glitch-effect');
+                setTimeout(() => {
+                    randomTitle.classList.remove('glitch-effect');
+                }, 300);
+            }
+        }
+        
+        // ===== FLICKER EFFECT =====
+        function screenFlicker() {
+            if (Math.random() > 0.95) {
+                document.body.style.opacity = '0.9';
+                setTimeout(() => {
+                    document.body.style.opacity = '1';
+                }, 50);
+            }
+        }
+        
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start with boot animation
+            showPage('bootPage');
+            
+            // Auto-transition from boot to main menu
+            setTimeout(() => {
+                showPage('mainPage');
+            }, 5000);
+            
+            // Random effects
+            setInterval(randomGlitch, 3000);
+            setInterval(screenFlicker, 1000);
+            
+            // Add click sound effect (optional)
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', function() {
+                    // Optional: Add click sound here
+                    console.log('> Navigation click');
+                });
+            });
+        });
+        
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', function(e) {
+            // ESC to go back to main
+            if (e.key === 'Escape' && currentPage !== 'mainPage') {
+                showPage('mainPage');
+            }
+            // 1 for Anime page
+            if (e.key === '1') {
+                showPage('animePage');
+            }
+            // 2 for Furry page
+            if (e.key === '2') {
+                showPage('furryPage');
+            }
+            // 0 for Main page
+            if (e.key === '0') {
+                showPage('mainPage');
+            }
+        });
+    </script>
+</body>
+</html>
